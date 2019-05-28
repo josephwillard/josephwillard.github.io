@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- #
+# http://0.0.0.0:8000/
 from __future__ import unicode_literals
 
 AUTHOR = 'Joseph Willard'
@@ -12,20 +13,20 @@ TIMEZONE = 'America/Detroit'
 
 DEFAULT_LANG = 'en'
 
-THEME = 'bootstrap2'
+THEME = '/home/joseph/git_projects/pelican-themes/bootstrap2'
 
-# Feed generation is usually not desired when developing
-FEED_ALL_ATOM = None
-CATEGORY_FEED_ATOM = None
-TRANSLATION_FEED_ATOM = None
-AUTHOR_FEED_ATOM = None
-AUTHOR_FEED_RSS = None
+# # Feed generation is usually not desired when developing
+# FEED_ALL_ATOM = None
+# CATEGORY_FEED_ATOM = None
+# TRANSLATION_FEED_ATOM = None
+# AUTHOR_FEED_ATOM = None
+# AUTHOR_FEED_RSS = None
 
 # Blogroll
 LINKS = (('Pelican', 'http://getpelican.com/'),
          ('Python.org', 'http://python.org/'),
          ('Jinja2', 'http://jinja.pocoo.org/'),
-         ('You can modify those links in your config file', '#'),)
+         ('Twiecki\'s', 'https://twiecki.io/'),)
 
 # Social widget
 SOCIAL = (('You can add links in your config file', '#'),
