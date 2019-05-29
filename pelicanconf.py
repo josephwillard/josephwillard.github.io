@@ -15,22 +15,20 @@ DEFAULT_LANG = 'en'
 
 THEME = '/home/joseph/git_projects/pelican-themes/bootstrap2'
 
-# # Feed generation is usually not desired when developing
-# FEED_ALL_ATOM = None
-# CATEGORY_FEED_ATOM = None
-# TRANSLATION_FEED_ATOM = None
-# AUTHOR_FEED_ATOM = None
-# AUTHOR_FEED_RSS = None
+# Feed generation is usually not desired when developing
+FEED_ALL_ATOM = None
+CATEGORY_FEED_ATOM = None
+TRANSLATION_FEED_ATOM = None
+AUTHOR_FEED_ATOM = None
+AUTHOR_FEED_RSS = None
 
 # Blogroll
-LINKS = (('Pelican', 'http://getpelican.com/'),
-         ('Python.org', 'http://python.org/'),
-         ('Jinja2', 'http://jinja.pocoo.org/'),
-         ('Twiecki\'s', 'https://twiecki.io/'),)
+LINKS = (('Twiecki\'s', 'https://twiecki.io/'),
+         ('PyMC3', 'https://docs.pymc.io/'),)
 
 # Social widget
-SOCIAL = (('You can add links in your config file', '#'),
-          ('Another social link', '#'),)
+SOCIAL = (('github', 'https://github.com/josephwillard'),
+          ('linkedin', 'https://www.linkedin.com/in/joseph-willard-5040a4117/'),)
 
 DEFAULT_PAGINATION = 10
 
