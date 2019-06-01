@@ -1,0 +1,26 @@
+#+OPTIONS: toc:nil
+Title: Symbolic-PyMC, PyMC and GSoC
+Author: Joseph Willard
+
+* What is PyMC
+
+* What is Symbolic-PyMC
+* What is the goal of my project
+* References
+
+* Other topics
+** How does tensorflow eager mode hurt symbolic-pymc
+** The disconect between python interface functions and the underlying graph objects
+*** ex:
+x_tf = tf.constant(1, name='x', dtype=tf.floart64)
+look at,
+x_op = x_tf.op
+# Where's the valu7e/1, name and dtype in inputs?
+list(x_op.inputs)
+x_op.outputs
+x_op.type
+# leadas to there being more than an op (op_def is the real op, which is a pb2(proto buf object) serialized object)
+# found missing value parameter (1) by
+x_op.get_attr("value")
+
+- make sure to hit compare s exressions and parsing python ast
