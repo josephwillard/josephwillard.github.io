@@ -1,0 +1,17 @@
+#+OPTIONS: toc:nil
+Title: Unifying Reifying and Symbolic-PyMC
+Author: Joseph Willard
+Date: 
+
+* Introduction
+In this post I'll cover the basics of unifying and reifying expressions and there motivations for symbolic-pymc.
+
+* Unify
+The idea behind unify is to take two similar terms and form a *substitution* which can be thought of as a mapping between variables and values. Let's look at a few quick examples,
+
+| Constant | Variable | Substitution |
+| -------- | -------- | ------------ |
+| (4, 5)   | (x, 5)   | {x: 4}       |
+| 'test'   | 'txst'   | {x: 'e'}     |
+
+
