@@ -6,12 +6,107 @@ Date:
 * Introduction
 In this post I'll cover the basics of unifying and reifying expressions and there motivations for symbolic-pymc.
 
+* Motivation
+# Need to add motivation here
+# want to find patterns in graphs and from these produce new graphs where we have applied symbolic math 
+# Why is this useful?
+
+
+Let's look at a basic example
+
+#+BEGIN_SRC python -n :exports both :results output
+  import numpy as np
+
+  X = np.random.normal(0, 1, (10, 10))
+  S = X.T.dot(X)
+  U, d, Vt = np.linalg.svd(S)
+  print(S - np.dot(U*d, Vt))
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+[[ 1.24344979e-14 -6.66133815e-15 -1.19904087e-14 -7.99360578e-15
+  -1.24344979e-14  7.10542736e-15  9.76996262e-15  2.22044605e-15
+  -3.10862447e-15  1.06858966e-15]
+ [-2.22044605e-15  1.77635684e-15  1.24344979e-14  3.10862447e-15
+   2.22044605e-15 -1.33226763e-15 -2.66453526e-15 -3.55271368e-15
+  -3.55271368e-15 -1.33226763e-15]
+ [-6.21724894e-15  1.86517468e-14  2.13162821e-14  1.77635684e-15
+   6.21724894e-15 -5.55111512e-15 -8.88178420e-15 -1.06581410e-14
+   6.21724894e-15  1.77635684e-15]
+ [-7.10542736e-15  5.55111512e-15 -5.32907052e-15  0.00000000e+00
+   7.99360578e-15 -5.32907052e-15 -1.11022302e-14  0.00000000e+00
+  -6.21724894e-15 -1.16573418e-15]
+ [-5.32907052e-15  1.77635684e-15  7.10542736e-15  6.21724894e-15
+   1.06581410e-14 -1.33226763e-15 -3.55271368e-15  8.88178420e-16
+  -2.44249065e-15 -3.99680289e-15]
+ [ 3.55271368e-15  6.66133815e-16  4.44089210e-16 -2.66453526e-15
+  -4.44089210e-15  1.77635684e-15  3.10862447e-15 -1.51267887e-15
+   3.55271368e-15  5.55111512e-16]
+ [ 7.10542736e-15 -3.55271368e-15 -5.32907052e-15 -5.77315973e-15
+  -3.55271368e-15  1.77635684e-15  3.55271368e-15 -1.77635684e-15
+   7.99360578e-15  2.66453526e-15]
+ [ 5.32907052e-15 -3.55271368e-15  2.66453526e-15  1.77635684e-15
+  -2.66453526e-15  3.63598041e-15  6.21724894e-15  0.00000000e+00
+   4.44089210e-16 -1.77635684e-15]
+ [ 2.66453526e-15  5.32907052e-15  1.86517468e-14  0.00000000e+00
+  -1.33226763e-15  8.88178420e-16  6.21724894e-15 -9.99200722e-15
+   1.77635684e-14 -4.44089210e-16]
+ [-6.52256027e-16 -4.44089210e-16 -2.44249065e-15 -1.94289029e-15
+  -8.88178420e-16 -3.33066907e-16 -1.33226763e-15 -2.66453526e-15
+   4.44089210e-16  0.00000000e+00]]
+#+end_example
+
+In regards to theory this should have been 0, but do to rounding errors mostly drawn from limitations of floats this is not the case.
+
+
+
+# Do SVD in TF and see if it still has the numeric error and use this example
+#+BEGIN_SRC python -n :exports both :results output
+  """ Seeing if tensorflow has the same issue
+  """
+  import tensorflow as tf
+  import tensorflow_probability as tfp
+  from tensorflow.python.framework.ops import disable_eager_execution
+
+  disable_eager_execution()
+  tfp = tfp.distributions
+  X = tfp.Normal(loc=0, scale=1)
+  X = X.sample([10, 10])
+
+  S = tf.tensordot(tf.transpose(X), X, 1)
+
+  U, d, Vt = tf.linalg.svd(S)
+#+END_SRC
+
+
+
+
 * Unify
 The idea behind unify is to take two similar terms and form a *substitution* which can be thought of as a mapping between variables and values. Let's look at a few quick examples,
 
 | Constant | Variable | Substitution |
-| -------- | -------- | ------------ |
 | (4, 5)   | (x, 5)   | {x: 4}       |
 | 'test'   | 'txst'   | {x: 'e'}     |
 
+In layman's terms at this point we are looking for effectively the set of values that make the statement true. Below are some examples of terms that do not unify,
 
+| Constant | Variable | Substitution |
+| (4, 5)   | (3, x)   | NA           |
+| 'test'   | 'exror'  | NA           |
+
+
+* Reify
+Reify is the opposite operation to unify. This implies that it takes a variable and a substitution and returns a value that contains no variables. Below is a quick example,
+
+
+| Variable | Substitution | Constant |
+| (x, 10)  | {x: 5}       | (5, 10)  |
+| 'mxsic'  | {x: 'u'}     | 'music'  |
+
+* Goals and there constructors
+Using the two concepts above we can now introduce the idea of a goal. A goal is effectively a stream of substitutions which can be demonstrated in the following example,
+
+Given that `x is a member of both `(8, 5, 2) and `(5, 2, 9) a stream of substitutions are {x: 5}, {x: 2}.
+
+* How does this relate to what I'm doing for GSoC?
