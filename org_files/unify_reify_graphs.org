@@ -4,15 +4,20 @@ Author: Joseph Willard
 Date: 
 
 * Introduction
-In this post I'll cover the basics of unifying and reifying expressions and there motivations for symbolic-pymc.
+# In this post I'll cover the basics of unifying and reifying expressions and there motivations for symbolic-pymc. 
+Digging through tensorflow we started by computing basic examples and
+comparing them to numpy's output. While doing this we found that in
+many cases there was a common theme of numerical approximation that
+theoretically should not have been present. Of course this brought me
+to pondering what would we have to do to get around these numerical
+errors that arise in software today?
 
-* COMMENT Motivation
-# Need to add motivation here
-# want to find patterns in graphs and from these produce new graphs where we have applied symbolic math 
-# Why is this useful?
+In this article I'll start by walking through the two examples and
+show the numerical errors, then I'll muse on what could be done to get
+around this and introduce minikanren.
 
-
-Let's look at a basic example
+* Motivation
+To start Let's look at a basic example using SVD.
 
 #+BEGIN_SRC python -n :exports both :results output
   import numpy as np
@@ -20,58 +25,64 @@ Let's look at a basic example
   X = np.random.normal(0, 1, (10, 10))
   S = X.T.dot(X)
   U, d, Vt = np.linalg.svd(S)
-  print(S)
-  #print(S - np.dot(U*d, Vt))
+  print(S - np.dot(U*d, Vt))
 #+END_SRC
 
 #+RESULTS:
 #+begin_example
-[[ 8.10443677  6.69251407 -1.73944385  2.25536557 -1.44948848  0.19932606
-   1.8836972   0.46495306 -4.23247986  1.18877419]
- [ 6.69251407 16.66592098  1.82979241 -0.17555944  1.40028483  7.67598842
-   2.74059863  0.49841579 -3.43716916  8.47415802]
- [-1.73944385  1.82979241  6.45085253 -5.14045864  3.02357519 -0.29781238
-  -2.3852535   2.53577388  1.41301427  0.82238915]
- [ 2.25536557 -0.17555944 -5.14045864 10.59621888 -1.05385232  4.88058911
-   2.47296055  2.22281434 -0.28286398  0.80106906]
- [-1.44948848  1.40028483  3.02357519 -1.05385232  4.85376418  2.05278959
-  -0.18633497  1.06927664 -0.04442789  0.48666845]
- [ 0.19932606  7.67598842 -0.29781238  4.88058911  2.05278959 15.65076731
-   2.30220281  5.41169121 -2.4318268   6.66129441]
- [ 1.8836972   2.74059863 -2.3852535   2.47296055 -0.18633497  2.30220281
-   7.21892701 -2.60365998 -1.77270086 -1.37440839]
- [ 0.46495306  0.49841579  2.53577388  2.22281434  1.06927664  5.41169121
-  -2.60365998  9.41239417  0.47791896  0.79319451]
- [-4.23247986 -3.43716916  1.41301427 -0.28286398 -0.04442789 -2.4318268
-  -1.77270086  0.47791896  7.10274067 -0.93554375]
- [ 1.18877419  8.47415802  0.82238915  0.80106906  0.48666845  6.66129441
-  -1.37440839  0.79319451 -0.93554375  9.62963789]]
+[[-5.32907052e-15  2.99760217e-15  2.22044605e-16 -5.55111512e-16
+  -5.10702591e-15 -1.11022302e-15 -3.55271368e-15 -2.66453526e-15
+   9.54791801e-15 -2.44249065e-15]
+ [ 2.66453526e-15 -1.77635684e-15 -4.77395901e-15  4.88498131e-15
+  -4.99600361e-16 -1.77635684e-15  1.22124533e-15  4.99600361e-16
+   9.71445147e-17  1.33226763e-15]
+ [ 1.11022302e-15 -3.66373598e-15  8.88178420e-16  3.99680289e-15
+   3.10862447e-15  6.66133815e-16  3.10862447e-15 -2.77555756e-17
+  -3.99680289e-15  2.33146835e-15]
+ [-3.88578059e-15  4.44089210e-16 -8.88178420e-16  1.77635684e-15
+  -3.55271368e-15  3.10862447e-15 -3.55271368e-15  1.44328993e-15
+   6.66133815e-16 -2.44249065e-15]
+ [-1.55431223e-15  2.49800181e-15  6.66133815e-15 -8.88178420e-15
+   3.55271368e-15 -2.22044605e-16  3.99680289e-15 -1.11022302e-15
+  -2.66453526e-15  1.33226763e-15]
+ [ 7.77156117e-16  0.00000000e+00 -6.66133815e-16  8.88178420e-16
+  -2.22044605e-16 -8.88178420e-16 -5.55111512e-17  0.00000000e+00
+  -1.11022302e-15  2.77555756e-15]
+ [-3.10862447e-15 -2.88657986e-15  4.44089210e-16  2.44249065e-15
+   4.88498131e-15  1.80411242e-16  3.55271368e-15  8.88178420e-16
+  -5.32907052e-15  2.66453526e-15]
+ [-6.66133815e-16 -2.10942375e-15 -2.60902411e-15  3.33066907e-15
+   1.77635684e-15 -1.33226763e-15  5.55111512e-16  8.88178420e-16
+  -2.66453526e-15  1.77635684e-15]
+ [ 4.10782519e-15 -3.73312492e-15 -3.55271368e-15  2.88657986e-15
+  -5.32907052e-15 -4.44089210e-16 -5.32907052e-15 -2.33146835e-15
+   7.10542736e-15 -4.66293670e-15]
+ [-2.44249065e-15 -2.44249065e-15  1.38777878e-15  2.22044605e-15
+   4.88498131e-15  2.10942375e-15  8.88178420e-16  8.88178420e-16
+  -4.10782519e-15  1.77635684e-15]]
 #+end_example
 
-In regards to theory this should have been 0, but do to rounding errors mostly drawn from limitations of floats this is not the case. A natural question to ask is whether there is a way around this. To provide an answer to this we need to introduce minikanren/logpy and the concepts of unify, reify and goals.
-
-
-
 # Do SVD in TF and see if it still has the numeric error and use this example
-#+BEGIN_SRC python -n :exports both :results output
+#+BEGIN_SRC python -n :exports both :results output :session tf
   """ Seeing if tensorflow has the same issue
   """
   import tensorflow as tf
   import tensorflow_probability as tfp
   from tensorflow.python.framework.ops import disable_eager_execution
-  tf.InteractiveSession()
 
+  tf.InteractiveSession()
   disable_eager_execution()
+
   tfp = tfp.distributions
   X = tfp.Normal(loc=0, scale=1)
   X = X.sample([10, 10])
 
-  S = tf.tensordot(tf.transpose(X), X, 1)
+  S = tf.matmul(X, X, transpose_a=True)
 
-  U, d, Vt = tf.linalg.svd(S)
+  d, U, V = tf.linalg.svd(S)
 
   #ans = S - tf.tensordot(U*d, Vt, 1)
-  ans = S - tf.tensordot(d*U, Vt, 1)
+  ans = S - tf.matmul(U, tf.matmul(tf.linalg.diag(d), V, adjoint_b=True))
   print(ans.eval())
   # Chris was suggesting something like this to turn off eager mode
   # import tensorflow.compat.v2 as tf
@@ -80,44 +91,91 @@ In regards to theory this should have been 0, but do to rounding errors mostly d
 
 #+RESULTS:
 #+begin_example
-
+Python 3.6.0 |Continuum Analytics, Inc.| (default, Dec 23 2016, 12:22:00) 
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
 WARNING: The TensorFlow contrib module will not be included in TensorFlow 2.0.
 For more information, please see:
   ,* https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
   ,* https://github.com/tensorflow/addons
 If you depend on functionality not listed there, please file an issue.
 
-[[ 1.1252207e+01 -3.6893898e-01 -4.7169094e+00 -2.3759778e+00
-  -2.7518475e-01  2.3077214e+00 -2.2148860e-01  3.7900646e+00
-   9.2848539e-03 -1.9226546e+00]
- [ 1.1027694e+00  5.1173925e+00 -2.5224431e+00  8.7815857e+00
-   6.4371819e+00 -2.9934659e+00 -5.3651299e+00  4.1261590e-01
-   4.2966547e+00 -1.9035205e+00]
- [-2.4870121e+00 -5.0484586e-01  1.8896112e+00 -1.7252587e+00
-   2.3558454e-01 -2.6020455e-01 -7.4684632e-01  1.5798866e+00
-   2.0205488e+00  1.4755418e+00]
- [-1.8404617e+00  9.3913431e+00 -5.0629026e-01  1.5753553e+01
-   1.4900604e+01 -5.1764765e+00 -1.0806535e+01  2.4843884e+00
-  -4.0670800e+00 -5.5632730e+00]
- [-2.7935195e+00  7.5058608e+00 -1.6156479e+00  7.4871902e+00
-   1.2572113e+01 -4.2184935e+00 -1.0495855e+01  7.6306295e+00
-  -7.9978170e+00 -7.2492323e+00]
- [ 8.1373870e-01 -2.7680688e+00  1.1684740e+00 -5.2537508e+00
-  -1.9381149e+00  5.7845712e+00  1.1258600e+00  5.0065308e+00
-  -3.6377077e+00  1.2874970e+00]
- [-3.9003892e+00 -4.7955275e+00  4.1601372e+00 -6.3509088e+00
-  -6.2124543e+00  4.5323048e+00  6.8936143e+00 -5.9301119e+00
-   1.0869396e+00  6.0019331e+00]
- [ 6.8113327e-01  1.0478487e+00 -1.7268178e+00  8.7355042e-01
-   9.2089081e-01 -3.4342916e+00 -3.1592460e+00  6.3375401e+00
-  -7.0218668e+00 -4.0386205e+00]
- [ 2.5703888e+00 -4.0682430e+00 -1.3385743e+00 -7.6910896e+00
-  -7.1330533e+00  1.1596898e+00  6.0371194e+00 -6.4142809e+00
-   1.2235129e+01  5.2758493e+00]
- [-8.2589579e+00 -3.2089128e+00  5.0353928e+00 -3.4152830e+00
-  -4.4947405e+00 -2.3546405e+00  4.8966484e+00 -8.5752373e+00
-   4.3229051e+00  5.4012055e+00]]
+2019-06-04 21:39:09.541977: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-06-04 21:39:09.563070: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 4200000000 Hz
+2019-06-04 21:39:09.563450: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x3dc3d40 executing computations on platform Host. Devices:
+2019-06-04 21:39:09.563465: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+[[-1.0013580e-05 -7.1525574e-07 -3.0994415e-06  9.5367432e-07
+   4.0531158e-06  1.9371510e-07 -8.5830688e-06  4.5299530e-06
+  -1.5199184e-06 -1.9073486e-06]
+ [-8.3446503e-07 -2.0980835e-05 -2.9802322e-06  8.5830688e-06
+  -1.2397766e-05 -7.5101852e-06 -7.6293945e-06 -1.9073486e-06
+   3.5166740e-06  4.5299530e-06]
+ [-2.0265579e-06 -3.1292439e-06 -6.1988831e-06  5.6028366e-06
+   0.0000000e+00 -1.1920929e-06 -5.9604645e-08  1.9073486e-06
+  -8.9406967e-07 -1.4305115e-06]
+ [ 4.7683716e-07  8.3446503e-06  6.4074993e-06 -7.6293945e-06
+   3.9041042e-06  4.7683716e-07  5.1259995e-06  2.1457672e-06
+   1.4305115e-06  2.3841858e-06]
+ [ 3.2782555e-06 -1.0967255e-05 -1.1920929e-07  2.4437904e-06
+  -1.9073486e-05 -4.0531158e-06 -5.8412552e-06 -2.1457672e-06
+   7.1525574e-06  3.5762787e-06]
+ [ 4.0233135e-07 -7.8678131e-06 -7.1525574e-07  1.0728836e-06
+  -5.2452087e-06 -8.5830688e-06 -5.1259995e-06 -1.0728836e-06
+  -2.5629997e-06  3.3378601e-06]
+ [-8.5830688e-06 -9.5367432e-06 -2.9802322e-07  6.0796738e-06
+  -7.9870224e-06 -5.1259995e-06 -1.2874603e-05 -5.9604645e-06
+  -2.8610229e-06 -8.5830688e-06]
+ [ 3.0994415e-06 -2.0265579e-06  1.9073486e-06  2.1457672e-06
+  -3.5762787e-06 -3.5762787e-07 -4.6491623e-06 -5.7220459e-06
+  -3.5762787e-06 -7.6293945e-06]
+ [-2.1457672e-06  3.0398369e-06 -1.5497208e-06  2.0265579e-06
+   6.1988831e-06 -1.9073486e-06 -3.0994415e-06 -3.2186508e-06
+  -1.2397766e-05 -6.6757202e-06]
+ [-2.0265579e-06  3.2186508e-06 -9.5367432e-07  2.2351742e-06
+   3.5762787e-06  4.0531158e-06 -9.0599060e-06 -7.1525574e-06
+  -6.6757202e-06 -1.8119812e-05]]
+python.el: native completion setup loaded
 #+end_example
+
+In regards to theory this should have been 0, but due to rounding
+errors mostly drawn from limitations of floats this is not the case. A
+natural question to ask is whether there is a way around this. To
+provide an answer to this we need to introduce minikanren/logpy and
+the concepts of unify, reify and goals.
+
+# Maybe move to the bottom
+Why would we care about this? One reason is of course numerical
+accuracy. The other could be this idea of automating "pen and paper"
+math. This would allow someone with a domain specific skill set be it
+in probability, numerical analysis to be able to automate their
+"tricks" and demystify.
+
+
+How do I find when a SVD is being computed? How do I then work with it?
+* Need to write down information that we need
+*** Talk about what comprises a TF object
+There exists an op field, etc. Identify SVD operation
+*** A way to get parents
+*** What components made up the multiplication
+
+*** show method to parse graph of operations and replace SVD example using minikanren. (need to do this with expository dialogue)
+
+
+#+BEGIN_SRC python -n :exports both :results output :session tf
+  def svd_optimize(graph):
+      # graph.op
+      # graph.op.inputs
+      # graph.op.outputs
+      # graph.op.op_def
+      # graph.op.get_value
+      # walk through these with ans
+      pass
+
+  svd_optimize(ans)
+
+  # This function produces a graph
+  tf.linalg.svd
+#+END_SRC
 
 
 
@@ -150,5 +208,7 @@ Using the two concepts above we can now introduce the idea of a goal. A goal is 
 Given that `x is a member of both `(8, 5, 2) and `(5, 2, 9) a stream of substitutions are {x: 5}, {x: 2}.
 
 * Returning to our question
+Of course one would notice that there exists other librarys that would seemingly handle this issue. But what we want to do is create this idea of symbolic math that sits on top of existing libraries, effectively TensorFlow has no concept of symbolic math but we provide this. 
+
 
 * How does this relate to what I'm doing for GSoC?
