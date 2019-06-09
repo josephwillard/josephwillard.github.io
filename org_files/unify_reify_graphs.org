@@ -4,7 +4,6 @@ Author: Joseph Willard
 Date: 
 
 * Introduction
-# In this post I'll cover the basics of unifying and reifying expressions and there motivations for symbolic-pymc. 
 Digging through tensorflow we started by computing basic examples and
 comparing them to numpy's output. While doing this we found that in
 many cases there was a common theme of numerical approximation that
@@ -100,40 +99,40 @@ For more information, please see:
   ,* https://github.com/tensorflow/addons
 If you depend on functionality not listed there, please file an issue.
 
-2019-06-05 20:57:49.677601: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
-2019-06-05 20:57:49.714555: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 4200000000 Hz
-2019-06-05 20:57:49.716195: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x456e8b0 executing computations on platform Host. Devices:
-2019-06-05 20:57:49.716207: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
-[[-8.58306885e-06 -5.96046448e-07  4.29153442e-06 -5.00679016e-06
-   4.76837158e-06  9.83476639e-07 -6.43730164e-06 -9.53674316e-07
-   2.62260437e-06  6.43730164e-06]
- [-1.07288361e-06 -1.33514404e-05 -4.05311584e-06  7.39097595e-06
-   3.03983688e-06  4.17232513e-06 -8.10623169e-06  3.09944153e-06
-   5.48362732e-06  7.11530447e-06]
- [ 4.05311584e-06 -4.29153442e-06 -6.91413879e-06  3.57627869e-06
-  -5.96046448e-07  1.80304050e-06  1.37090683e-06  2.38418579e-07
-   4.88758087e-06  1.66893005e-06]
- [-2.86102295e-06  8.34465027e-06  3.93390656e-06 -2.28881836e-05
-   3.36021185e-06 -2.86102295e-06  1.02519989e-05 -1.04904175e-05
-   5.24520874e-06 -6.55651093e-07]
- [ 4.76837158e-06  1.72853470e-06 -2.14576721e-06  3.66941094e-06
-  -4.29153442e-06  5.96046448e-07 -2.38418579e-07  4.17232513e-06
-  -2.62260437e-06 -1.66893005e-06]
- [ 1.40070915e-06  3.57627869e-06  1.28149986e-06 -2.02655792e-06
-   0.00000000e+00 -2.62260437e-06  4.76837158e-07 -3.57627869e-07
-  -3.33786011e-06 -9.53674316e-07]
- [-6.43730164e-06 -6.43730164e-06  1.07288361e-06  8.34465027e-06
-  -4.76837158e-07  1.90734863e-06 -1.14440918e-05  4.29153442e-06
-  -5.48362732e-06  1.90734863e-06]
- [-1.19209290e-07  3.33786011e-06  7.15255737e-07 -1.14440918e-05
-   4.05311584e-06 -1.43051147e-06  3.81469727e-06 -5.72204590e-06
-   6.43730164e-06  1.54972076e-06]
- [ 1.90734863e-06  4.82797623e-06  4.27290797e-06  5.96046448e-06
-  -1.90734863e-06 -3.57627869e-06 -7.27176666e-06  6.31809235e-06
-  -1.14440918e-05 -4.76837158e-07]
- [ 5.96046448e-06  6.96489587e-06  1.90734863e-06 -1.05798244e-06
-  -2.38418579e-06 -2.86102295e-06  0.00000000e+00  1.78813934e-06
-  -1.90734863e-06 -2.86102295e-06]]
+2019-06-06 21:20:34.124532: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-06-06 21:20:34.143868: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 4200000000 Hz
+2019-06-06 21:20:34.144541: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x4c6cd60 executing computations on platform Host. Devices:
+2019-06-06 21:20:34.144570: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+[[-2.47955322e-05  1.33514404e-05  1.81198120e-05 -1.28746033e-05
+  -5.42402267e-06 -2.98023224e-06  7.62939453e-06  7.15255737e-06
+   5.72204590e-06 -3.57627869e-06]
+ [ 1.04904175e-05 -1.00135803e-05 -5.24520874e-06  2.14576721e-06
+   3.69548798e-06  1.66893005e-06 -5.96046448e-06 -8.58306885e-06
+  -1.07288361e-06 -4.29153442e-06]
+ [ 1.62124634e-05 -7.03334808e-06 -1.81198120e-05  1.28746033e-05
+   4.29153442e-06 -9.53674316e-07 -7.51018524e-06 -2.38418579e-06
+  -5.24520874e-06  2.62260437e-06]
+ [-1.09672546e-05  1.66893005e-06  1.23977661e-05 -7.62939453e-06
+  -2.14576721e-06 -2.68220901e-07  1.60932541e-06 -3.69548798e-06
+   5.24520874e-06 -9.53674316e-06]
+ [-4.82797623e-06  2.44379044e-06  5.24520874e-06 -3.09944153e-06
+   1.90734863e-06  9.53674316e-07  4.02331352e-06 -1.11758709e-07
+   6.55651093e-07 -1.19209290e-06]
+ [-3.09944153e-06  1.07288361e-06 -4.76837158e-07 -2.38418579e-07
+  -1.04308128e-07 -2.38418579e-07  5.36441803e-07  7.15255737e-07
+   1.16229057e-06  1.90734863e-06]
+ [ 6.91413879e-06 -6.91413879e-06 -8.22544098e-06  1.60932541e-06
+   4.61935997e-06  4.17232513e-07 -5.24520874e-06 -4.17232513e-06
+  -1.07288361e-06  0.00000000e+00]
+ [ 6.67572021e-06 -8.10623169e-06 -2.26497650e-06 -3.09944153e-06
+   9.68575478e-08  8.34465027e-07 -4.41074371e-06 -9.53674316e-07
+   2.14576721e-06 -7.15255737e-06]
+ [ 4.76837158e-06 -1.72853470e-06 -5.48362732e-06  5.36441803e-06
+   5.36441803e-07  1.31130219e-06 -1.43051147e-06  1.23679638e-06
+  -6.67572021e-06  4.41074371e-06]
+ [-4.17232513e-06 -3.57627869e-06  2.38418579e-06 -9.05990601e-06
+   0.00000000e+00  2.02655792e-06  9.53674316e-07 -8.10623169e-06
+   4.05311584e-06 -1.71661377e-05]]
 python.el: native completion setup loaded
 #+end_example
 
@@ -203,11 +202,12 @@ Let's look,
 #+RESULTS:
 [<tf.Tensor 'MatMul:0' shape=(10, 10) dtype=float32>, <tf.Tensor 'MatMul_2:0' shape=(10, 10) dtype=float32>]
 
+Here it looks like we have references to the previous tensors that were subtracted to create the answer we got above. Let's dig a little deeper yet into "ans".
 
 
+#+BEGIN_SRC python -n :exports both :results output :session tf
 
-
-# How do I find when a SVD is being computed? How do I then work with it?
+#+END_SRC
 
 
 
@@ -242,8 +242,8 @@ There exists an op field, etc. Identify SVD operation
 
 
 
-
-* Unify
+* Old Notes
+** Unify
 The idea behind unify is to take two similar terms and form a *substitution* which can be thought of as a mapping between variables and values. Let's look at a few quick examples,
 
 | Constant | Variable | Substitution |
@@ -256,8 +256,7 @@ In layman's terms at this point we are looking for effectively the set of values
 | (4, 5)   | (3, x)   | NA           |
 | 'test'   | 'exror'  | NA           |
 
-
-* Reify
+** Reify
 Reify is the opposite operation to unify. This implies that it takes a variable and a substitution and returns a value that contains no variables. Below is a quick example,
 
 
@@ -265,13 +264,38 @@ Reify is the opposite operation to unify. This implies that it takes a variable 
 | (x, 10)  | {x: 5}       | (5, 10)  |
 | 'mxsic'  | {x: 'u'}     | 'music'  |
 
-* Goals and there constructors
+** Goals and there constructors
 Using the two concepts above we can now introduce the idea of a goal. A goal is effectively a stream of substitutions which can be demonstrated in the following example,
 
 Given that `x is a member of both `(8, 5, 2) and `(5, 2, 9) a stream of substitutions are {x: 5}, {x: 2}.
 
-* Returning to our question
+** Returning to our question
 Of course one would notice that there exists other librarys that would seemingly handle this issue. But what we want to do is create this idea of symbolic math that sits on top of existing libraries, effectively TensorFlow has no concept of symbolic math but we provide this. 
 
+** How does this relate to what I'm doing for GSoC?
 
-* How does this relate to what I'm doing for GSoC?
+
+* issue example
+
+#+BEGIN_SRC python -n :exports both :results output
+  import tensorflow as tf
+  from symbolic_pymc.tensorflow.meta import mt
+
+  x = tf.compat.v1.placeholder(tf.float64, name='x',
+			      shape=tf.TensorShape([None, 1]))
+  y = tf.compat.v1.placeholder(tf.float64, name='y',
+			      shape=tf.TensorShape([None, 1]))
+  mt(x + y) == mt(x + y)
+  # update requirements
+#+END_SRC
+
+TFlowMetaOp.__eq__ shouldn't compare with TFlowMetaOp.name
+
+
+
+* work                                                             :noexport:
+
+#+BEGIN_SRC python -n :exports both :results output
+  def svd_optimize():
+      pass
+#+END_SRC
