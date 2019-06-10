@@ -12,19 +12,14 @@
 #+OPTIONS: toc:nil
 
 * Introduction
-Digging through tensorflow we started by computing basic examples and
+Digging through TensorFlow I started by computing basic examples and
 comparing them to numpy's output. While doing this we found that in
 many cases there was a common theme of numerical approximation that
 theoretically should not have been present. Of course this brought me
-to pondering what would we have to do to get around these numerical
+to pondering what would I have to do to get around these numerical
 errors that arise in software today?
 
-In this article I'll start by walking through an example using SVD and
-show the numerical errors, then I'll muse on what could be done to get
-around this.
-
-* Motivation
-To start Let's look at a basic example using SVD.
+In this article consider the situation were one passingly uses an SVD.
 
 #+BEGIN_SRC python -n :results value table
   import numpy as np
@@ -37,19 +32,14 @@ To start Let's look at a basic example using SVD.
 
 #+RESULTS:
 :RESULTS:
-| -6.21724894e-15 |  9.32587341e-15 | -1.55431223e-15 | -2.92821323e-15 |  5.32907052e-15 | -2.66453526e-15 | 1.11022302e-15 | -4.41313652e-15 | -4.88498131e-15 |   4.4408921e-16 |
-|  -4.4408921e-16 | -1.24344979e-14 | -3.33066907e-16 |             0.0 | -5.32907052e-15 | -6.66133815e-16 | 7.99360578e-15 |   4.4408921e-16 | -7.10542736e-15 |  2.22044605e-16 |
-| -3.33066907e-16 |  2.44249065e-15 |             0.0 |  2.22044605e-16 |  3.77475828e-15 |  5.32907052e-15 |  4.4408921e-16 |  -8.8817842e-16 |  2.66453526e-15 |  2.66453526e-15 |
-| -2.30371278e-15 | -1.99840144e-15 | -3.99680289e-15 | -3.55271368e-15 | -2.22044605e-15 |  -8.8817842e-16 | 1.33226763e-15 |  -8.8817842e-16 | -3.99680289e-15 | -3.55271368e-15 |
-| -1.77635684e-15 | -7.99360578e-15 |  1.55431223e-15 |  -8.8817842e-16 |  -8.8817842e-15 | -3.55271368e-15 | 2.66453526e-15 |  7.99360578e-15 |             0.0 |   4.4408921e-16 |
-|  -4.4408921e-15 |  6.66133815e-16 |  6.21724894e-15 | -2.22044605e-16 | -2.66453526e-15 | -1.24344979e-14 | 2.66453526e-15 |   4.4408921e-15 | -2.22044605e-16 | -2.22044605e-16 |
-|  1.72084569e-15 |  1.77635684e-15 |  1.77635684e-15 |  1.33226763e-15 |  3.10862447e-15 |  -8.8817842e-16 | -4.4408921e-15 |   8.8817842e-16 |  5.32907052e-15 |  -8.8817842e-16 |
-|  9.99200722e-16 |  5.27355937e-15 |  -4.4408921e-15 |  -8.8817842e-16 |  9.76996262e-15 |  3.55271368e-15 |  4.4408921e-16 |  -1.0658141e-14 | -1.77635684e-15 | -7.54951657e-15 |
-| -3.77475828e-15 |  -4.4408921e-16 |  -8.8817842e-16 | -1.77635684e-15 | -3.55271368e-15 |  -4.6629367e-15 | 2.66453526e-15 |             0.0 | -3.55271368e-15 |  4.88498131e-15 |
-|  1.33226763e-15 |             0.0 |  1.77635684e-15 |  -4.4408921e-16 |  2.66453526e-15 |  1.11022302e-15 | 2.22044605e-16 | -4.88498131e-15 |   8.8817842e-16 | -6.21724894e-15 |
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/tmp/babel-1959IYY/python-1959Mc0", line 1, in <module>
+    from graphviz import Digraph
+ModuleNotFoundError: No module named 'graphviz'
 :END:
 
-Theoretically, this would raise an eyebrow. Next, does TensorFlow exhibit the same issue?
+Let's see if TensorFlow exhibits the same issue?
 
 #+BEGIN_SRC python -n :results value table
   """ Seeing if tensorflow has the same issue
@@ -90,31 +80,33 @@ Theoretically, this would raise an eyebrow. Next, does TensorFlow exhibit the sa
 | -3.21270788e-15 |  -8.8817842e-16 |  9.76996262e-15 | -3.55271368e-15 |  3.33066907e-15 | -2.44249065e-15 | -1.38777878e-15 | -3.55271368e-15 |             0.0 |  1.77635684e-15 |
 :END:
 
-
 In regards to theory this should have been 0, but due to rounding
 errors mostly drawn from limitations of floats this is not the
-case. Natural questions to ask is whether there is a way around this
-and Why would we care about this?
+case. Natural questions to ask are "Is there a way around this?"
+and "Why would one care?"
 
-Answering the second question One reason is of course numerical
-accuracy. The other could be this idea of automating "pen and paper"
-math. This would allow someone with a domain specific skill set be it
-in probability, numerical analysis to be able to automate their
-"tricks" and demystify more complex ideas in their respective fields.
+Answering the second question, one reason is of course optimizing
+numerical deficiencies when possible. The other could be this idea of
+automating "pen and paper" math. This would allow someone with a
+domain specific skill set be it in probability, numerical analysis to
+be able to automate their "tricks" and demystify more complex ideas in
+their respective fields.
 
-Moving back to the first question one method is to think of the
+Moving back to the first question, one method is to think of the
 process of doing SVD above as a graph of operations. In this graph
 each node is the output of an operation that is the edge connecting
 nodes. What this would allow us to do is to traverse the graph looking
 for operations that could be reduced or removed all together. This
 could be broken down into two larger questions. the first and one
-we'll focus on in this blog is how do we create a graph of operations?
-The second is how do we determine what we're looking at can be
+I'll focus on in this blog is how do I create a graph of operations?
+The second is how do I determine what I'm looking at can be
 reduced? 
 
-To begin answering the first question let's look at what our term
-"ans" has as objects outside of the standard assigned objects.
+* Inspection of TensorFlow objects
 
+To begin answering the first question, let's look at what our term
+~ans~ has as objects outside of the standard assigned objects. As a
+side note, this [[https://blog.jakuba.net/2017/05/30/Visualizing-TensorFlow-Graphs-in-Jupyter-Notebooks/][blog post]] covers some of the same material.
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
   _ = [i for i in dir(ans) if not i.startswith('_')]
@@ -136,114 +128,21 @@ To begin answering the first question let's look at what our term
  'value_index']
 #+END_src
 
-Looking at the dir object we see a few objects of interest, let's
-print the output of a few of them.
+One that immediately strikes some interest is ~ans.op~. 
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
-  _ = [[i for i in dir(ans.graph) if not i.startswith('_')],
-       [i for i in dir(ans.op) if not i.startswith('_')],
-       [i for i in dir(ans.name) if not i.startswith('_')]]
+  _ = ans.op
 #+END_SRC
 
 #+RESULTS:
 #+BEGIN_src python :eval never
-[['add_to_collection',
-  'add_to_collections',
-  'as_default',
-  'as_graph_def',
-  'as_graph_element',
-  'building_function',
-  'clear_collection',
-  'collections',
-  'colocate_with',
-  'container',
-  'control_dependencies',
-  'create_op',
-  'device',
-  'finalize',
-  'finalized',
-  'get_all_collection_keys',
-  'get_collection',
-  'get_collection_ref',
-  'get_name_scope',
-  'get_operation_by_name',
-  'get_operations',
-  'get_tensor_by_name',
-  'gradient_override_map',
-  'graph_def_versions',
-  'is_feedable',
-  'is_fetchable',
-  'name_scope',
-  'prevent_feeding',
-  'prevent_fetching',
-  'seed',
-  'switch_to_thread_local',
-  'unique_name',
-  'version'],
- ['colocation_groups',
-  'control_inputs',
-  'device',
-  'get_attr',
-  'graph',
-  'inputs',
-  'name',
-  'node_def',
-  'op_def',
-  'outputs',
-  'run',
-  'traceback',
-  'traceback_with_start_lines',
-  'type',
-  'values'],
- ['capitalize',
-  'casefold',
-  'center',
-  'count',
-  'encode',
-  'endswith',
-  'expandtabs',
-  'find',
-  'format',
-  'format_map',
-  'index',
-  'isalnum',
-  'isalpha',
-  'isdecimal',
-  'isdigit',
-  'isidentifier',
-  'islower',
-  'isnumeric',
-  'isprintable',
-  'isspace',
-  'istitle',
-  'isupper',
-  'join',
-  'ljust',
-  'lower',
-  'lstrip',
-  'maketrans',
-  'partition',
-  'replace',
-  'rfind',
-  'rindex',
-  'rjust',
-  'rpartition',
-  'rsplit',
-  'rstrip',
-  'split',
-  'splitlines',
-  'startswith',
-  'strip',
-  'swapcase',
-  'title',
-  'translate',
-  'upper',
-  'zfill']]
+<tf.Operation 'sub_4' type=Sub>
 #+END_src
 
-One that immediately strikes some interest is ~ans.op~. Looking at it
-the entries ~input~ and ~output~ could be what we are looking for!
-Looking closer at these two.
+For those that are new to TensorFlow an ~op~ or ~operation~ is a node
+that performs a computation on a tensor. One part of ~op~ is the
+inclusion of ~input~ and ~output~ objects. These objects could be what I'm
+looking for! Let's print out what these look like.
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
   _ = [ans.op.inputs._inputs, ans.op.outputs]
@@ -256,97 +155,9 @@ Looking closer at these two.
  [<tf.Tensor 'sub_4:0' shape=(10, 10) dtype=float64>]]
 #+END_src
 
-Here it looks like we have references to the previous tensors that
-were subtracted to create the answer we got above and the resulting
-output. Let's dig a little deeper yet into "ans.op.inputs" and see if
-we can glean more information.
-
-#+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
-  _ = [[i for i in dir(ans.op.inputs._inputs[0]) if not i.startswith('_')],
-       [i for i in dir(ans.op.inputs._inputs[1]) if not i.startswith('_')]]
-#+END_SRC
-
-#+RESULTS:
-#+BEGIN_src python :eval never
-[['OVERLOADABLE_OPERATORS',
-  'consumers',
-  'device',
-  'dtype',
-  'eval',
-  'get_shape',
-  'graph',
-  'name',
-  'op',
-  'set_shape',
-  'shape',
-  'value_index'],
- ['OVERLOADABLE_OPERATORS',
-  'consumers',
-  'device',
-  'dtype',
-  'eval',
-  'get_shape',
-  'graph',
-  'name',
-  'op',
-  'set_shape',
-  'shape',
-  'value_index']]
-#+END_src
-
-Looking at the ~dir~ object gives us a lot to look at. For example
-let's look at the eval object for these inputs.
-
-
-#+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
-  _ = [ans.op.inputs._inputs[0].eval(), ans.op.inputs._inputs[1].eval()]
-#+END_SRC
-
-#+RESULTS:
-#+BEGIN_src python :eval never
-[array([[11.4738134 ,  4.26016144,  0.6781197 ,  2.44359888,  5.74114084,
-        -5.08738765,  0.51469722, -1.44799447,  3.84346746, -3.82986559],
-       [ 4.26016144,  9.92049161,  2.67004972,  1.15531941,  1.86485298,
-        -2.47732948, -3.93827103,  1.03626778,  2.97465137, -4.91821685],
-       [ 0.6781197 ,  2.67004972,  6.7600335 , -3.506919  , -0.56250284,
-         2.13570519, -6.23690503,  0.60437777,  0.55511039, -2.00723535],
-       [ 2.44359888,  1.15531941, -3.506919  , 14.40337668,  0.58971477,
-         3.55243256,  0.83760618, -6.93702187, -3.33646066,  1.80625177],
-       [ 5.74114084,  1.86485298, -0.56250284,  0.58971477,  7.16490006,
-        -2.83154033, -0.87009445, -1.78505806,  2.81836819, -2.02490526],
-       [-5.08738765, -2.47732948,  2.13570519,  3.55243256, -2.83154033,
-         8.58957555, -1.63243626, -3.76186941, -3.47913535,  0.62505777],
-       [ 0.51469722, -3.93827103, -6.23690503,  0.83760618, -0.87009445,
-        -1.63243626, 12.96962309,  1.16933893, -0.16354281, -2.62201206],
-       [-1.44799447,  1.03626778,  0.60437777, -6.93702187, -1.78505806,
-        -3.76186941,  1.16933893,  8.3366981 ,  3.37379237, -2.46187474],
-       [ 3.84346746,  2.97465137,  0.55511039, -3.33646066,  2.81836819,
-        -3.47913535, -0.16354281,  3.37379237,  5.20192585, -3.82301366],
-       [-3.82986559, -4.91821685, -2.00723535,  1.80625177, -2.02490526,
-         0.62505777, -2.62201206, -2.46187474, -3.82301366,  8.92444935]]),
- array([[11.4738134 ,  4.26016144,  0.6781197 ,  2.44359888,  5.74114084,
-        -5.08738765,  0.51469722, -1.44799447,  3.84346746, -3.82986559],
-       [ 4.26016144,  9.92049161,  2.67004972,  1.15531941,  1.86485298,
-        -2.47732948, -3.93827103,  1.03626778,  2.97465137, -4.91821685],
-       [ 0.6781197 ,  2.67004972,  6.7600335 , -3.506919  , -0.56250284,
-         2.13570519, -6.23690503,  0.60437777,  0.55511039, -2.00723535],
-       [ 2.44359888,  1.15531941, -3.506919  , 14.40337668,  0.58971477,
-         3.55243256,  0.83760618, -6.93702187, -3.33646066,  1.80625177],
-       [ 5.74114084,  1.86485298, -0.56250284,  0.58971477,  7.16490006,
-        -2.83154033, -0.87009445, -1.78505806,  2.81836819, -2.02490526],
-       [-5.08738765, -2.47732948,  2.13570519,  3.55243256, -2.83154033,
-         8.58957555, -1.63243626, -3.76186941, -3.47913535,  0.62505777],
-       [ 0.51469722, -3.93827103, -6.23690503,  0.83760618, -0.87009445,
-        -1.63243626, 12.96962309,  1.16933893, -0.16354281, -2.62201206],
-       [-1.44799447,  1.03626778,  0.60437777, -6.93702187, -1.78505806,
-        -3.76186941,  1.16933893,  8.3366981 ,  3.37379237, -2.46187474],
-       [ 3.84346746,  2.97465137,  0.55511039, -3.33646066,  2.81836819,
-        -3.47913535, -0.16354281,  3.37379237,  5.20192585, -3.82301366],
-       [-3.82986559, -4.91821685, -2.00723535,  1.80625177, -2.02490526,
-         0.62505777, -2.62201206, -2.46187474, -3.82301366,  8.92444935]])]
-#+END_src
-
-These both look like our two inputs! We of course directly check this.
+Here it looks like I have references to the previous tensors that were
+subtracted to create the answer I got above and the resulting
+output. Of course I can directly check this.
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
   _ = [ans.op.inputs._inputs[0] == S, ans.op.inputs._inputs[1] == D]
@@ -357,13 +168,12 @@ These both look like our two inputs! We of course directly check this.
 [True, True]
 #+END_src
 
-Great! So as a quick recap we now have a way to take the result ~ans~
-from our initial statement above and we have found way a way to walk
-backwards and get our original matrices. Quickly references the second
-question from the beginning, is it possible to determine what kind of
-operations are transpiring? For example is it possible to determine if
-there was an SVD operation? The quick answer is yes and all we need to
-do is use the same methods we've used thus far!
+Great! So as a quick recap I now have a way to take the result ~ans~
+and walk backwards to our original matrices. Is it possible to
+determine what kind of operations are transpiring? Specifically, is it
+possible to determine if there was an SVD operation? The quick answer
+is "yes"! All I need to do is use the same methods I've used thus
+far.
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
   _ = ans.op.inputs._inputs[1].op.inputs._inputs[0].name
@@ -373,16 +183,15 @@ do is use the same methods we've used thus far!
 #+BEGIN_src python :eval never
 'Svd_4:1'
 #+END_src
-
-
  
-From here it's clear that there exists a way to move between
-operations and from this it is possible to make a graph of operations
-with the ability to determine what operations took place. Having this
-graph for larger scale projects would allow for better methods of
-optimization. How one may ask? Well let's introduce the concept of
-goals that would help make this possible. First though we must talk
-about the concepts of unify and reify.
+At this point it's clear there exists a way to move between
+operations. From this it is possible to make a graph of operations
+with the ability to determine which took place. Having this graph
+for larger scale projects would allow for better methods of
+optimization. How one may ask? We would need a way to traverse a graph
+and create a list of possible solutions. This concept can be described
+through the notion of "goals". However, before introducing the idea
+one must talk about the concepts of unify and reify.
 
 
 ** Unify
@@ -394,7 +203,7 @@ and values. Let's look at a few quick examples,
 | (4, 5)   | (x, 5)   | {x: 4}       |
 | 'test'   | 'txst'   | {x: 'e'}     |
 
-In layman's terms at this point we are looking for effectively the set
+In layman's terms at this point I'm looking for effectively the set
 of values that make the statement true. Below are some examples of
 terms that do not unify,
 
@@ -413,7 +222,7 @@ variables. Below is a quick example,
 | 'mxsic'  | {x: 'u'}     | 'music'  |
 
 ** Goals and there constructors
-Using the two concepts above we can now introduce the idea of a
+Using the two concepts above I can now introduce the idea of a
 goal. A goal is effectively a stream of substitutions which can be
 demonstrated in the following example,
 
@@ -438,3 +247,23 @@ on this idea as it relates to the work I am doing for GSoC.
 
 
 # add portion that talks about tuple_expression and unify against that
+
+#+NAME:
+#+BEGIN_SRC python -n :exports both :results output
+  from graphviz import Digraph
+
+  def tf_to_dot(graph):
+     dot = Digraph()
+     for n in graph.as_graph_def().node:
+         dot.node(n.name, label=n.name)
+         for i in n.input:
+             dot.edge(i, n.name)
+     return dot
+
+
+  dgraph = tf_to_dot(ans.graph)
+
+  dgraph.render('/tmp/graph.png', view=True)
+#+END_SRC
+
+#+CAPTION:
