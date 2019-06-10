@@ -96,13 +96,59 @@ Moving back to the first question, one method is to think of the
 process of doing SVD above as a graph of operations. In this graph
 each node is the output of an operation that is the edge connecting
 nodes. What this would allow us to do is to traverse the graph looking
-for operations that could be reduced or removed all together. This
-could be broken down into two larger questions. the first and one
-I'll focus on in this blog is how do I create a graph of operations?
-The second is how do I determine what I'm looking at can be
-reduced? 
+for operations that could be reduced or removed all together. 
 
-* Inspection of TensorFlow objects
+# This
+# could be broken down into two larger questions. the first and one
+# I'll focus on in this blog is how do I create a graph of operations?
+# The second is how do I determine what I'm looking at can be
+# reduced? 
+
+** An analogy
+First let's consider an analogy using strings,
+
+#+BEGIN_SRC python
+input_src_code = """
+u, d, v = svd(S)
+ans = S - matmul(u, d, v)
+"""
+#+END_SRC
+
+Consider some src_python{optimize} function, that does the following:
+
+#+BEGIN_SRC python
+output_src_code = str_optimize(input_src_code)
+#+END_SRC
+
+where
+
+#+BEGIN_SRC python
+assert output_src_code == """
+u, d, v = svd(S)
+ans = S - S
+"""
+#+END_SRC
+
+In this we need to replace src_python{"matmul(u, d, v)"} with src_python{"S"}, but what
+do we need in order to implement this? 
+
+1. Match the pattern for an SVD, e.g.
+  #+BEGIN_SRC python
+  res = re.search("([a-zA-Z]+), ([a-zA-Z]+), ([a-zA-Z]+) = svd\(([a-zA-Z]+)\)", input_src_code)
+  U = res.group(1)
+  D = res.group(2)
+  V = res.group(3)
+  S = res.group(4)
+  #+END_SRC
+2. If it matches, match and replace the "matmul", e.g. with
+  #+BEGIN_SRC python
+  optimized_code = input_src_code.replace("matmul({}, {}, {})".format(U, D, V), S)
+  #+END_SRC
+
+Using this analogy how does this map back to the TensorFlow objects
+that we'll be working with?
+
+* What is a TensorFlow graph?
 
 To begin answering the first question, let's look at what our term
 ~ans~ has as objects outside of the standard assigned objects. As a
@@ -140,9 +186,9 @@ One that immediately strikes some interest is ~ans.op~.
 #+END_src
 
 For those that are new to TensorFlow an ~op~ or ~operation~ is a node
-that performs a computation on a tensor. One part of ~op~ is the
-inclusion of ~input~ and ~output~ objects. These objects could be what I'm
-looking for! Let's print out what these look like.
+that performs a computation on a tensor. Some of the properties
+included in ~op~ are ~inputs~ and ~outputs~. These could be what I'm
+looking for, Let's print them out.
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
   _ = [ans.op.inputs._inputs, ans.op.outputs]
@@ -155,9 +201,8 @@ looking for! Let's print out what these look like.
  [<tf.Tensor 'sub_4:0' shape=(10, 10) dtype=float64>]]
 #+END_src
 
-Here it looks like I have references to the previous tensors that were
-subtracted to create the answer I got above and the resulting
-output. Of course I can directly check this.
+These look like references to the previous tensors that were
+subtracted to create ~ans~. Of course I can directly check this.
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
   _ = [ans.op.inputs._inputs[0] == S, ans.op.inputs._inputs[1] == D]
@@ -185,18 +230,101 @@ far.
 #+END_src
  
 At this point it's clear there exists a way to move between
-operations. From this it is possible to make a graph of operations
-with the ability to determine which took place. Having this graph
-for larger scale projects would allow for better methods of
-optimization. How one may ask? We would need a way to traverse a graph
-and create a list of possible solutions. This concept can be described
-through the notion of "goals". However, before introducing the idea
-one must talk about the concepts of unify and reify.
+operations. From this it is possible to make a graph of
+operations. Having this graph for larger scale projects would allow
+for better methods of optimization. How one may ask? We would need a
+way to traverse a graph and find patterns. This idea is analogous to
+searching strings like in our opening analogy. In the later blog posts
+I'll dive into creating functions that parse this graph and make the
+required replacements much like our string analogy.
+
+
+
+
+
+
+* remove move to different b                                                              :noexport:
+
+#+BEGIN_SRC python -n :exports both :results output
+  import symbolic_pymc.tensorflow
+  from symbolic_pymc.unify import (ExpressionTuple, etuple, tuple_expression)
+  z = tuple_expression(ans)
+#+END_SRC
+
+
+# add portion that talks about tuple_expression and unify against that
+
+#+NAME:
+#+BEGIN_SRC python -n :exports both :results output
+  from graphviz import Digraph
+
+  def tf_to_dot(graph):
+     dot = Digraph()
+     for n in graph.as_graph_def().node:
+         dot.node(n.name, label=n.name)
+         for i in n.input:
+             dot.edge(i, n.name)
+     return dot
+
+
+  dgraph = tf_to_dot(ans.graph)
+
+  dgraph.render('/tmp/graph.png', view=True)
+#+END_SRC
+
+#+CAPTION:
+
+#+BEGIN_SRC python
+input_src_code = """
+u, d, v = svd(S)
+ans = S - matmul(u, d, v)
+"""
+#+END_SRC
+
+Consider some src_python{optimize} function, that does the following:
+
+#+BEGIN_SRC python
+output_src_code = str_optimize(input_src_code)
+#+END_SRC
+
+where
+
+#+BEGIN_SRC python
+assert output_src_code == """
+u, d, v = svd(S)
+ans = S - S
+"""
+#+END_SRC
+
+In this we need to replace src_python{"matmul(u, d, v)"} with src_python{"S"}, but what
+*exactly* do we need in order to implement this? 
+
+1. Match the pattern for an SVD, e.g.
+  #+BEGIN_SRC python
+  res = re.search("([a-zA-Z]+), ([a-zA-Z]+), ([a-zA-Z]+) = svd\(([a-zA-Z]+)\)", input_src_code)
+  U = res.group(1)
+  D = res.group(2)
+  V = res.group(3)
+  S = res.group(4)
+  #+END_SRC
+2. If it matches, match and replace the "matmul", e.g. with
+  #+BEGIN_SRC python
+  optimized_code = input_src_code.replace("matmul({}, {}, {})".format(U, D, V), S)
+  #+END_SRC
+
+
+How does this analogy map to back the TensorFlow objects we have been working with? 
+
+For example in our situation when is a person doing
+a SVD? This concept can be described through the notion of
+"goals". However, before introducing the idea one must talk about the
+concepts of unify and reify. 
+
 
 
 ** Unify
 The idea behind unify is to take two similar terms and form a
-*substitution* which can be thought of as a mapping between variables
+substitution which can be thought of as a mapping between variables
 and values. Let's look at a few quick examples,
 
 | Constant | Variable | Substitution |
