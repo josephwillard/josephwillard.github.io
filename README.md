@@ -1,2 +1,0 @@
-# josephwillard.github.io
-Blog
