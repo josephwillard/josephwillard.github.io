@@ -13,11 +13,11 @@
 
 * Introduction
 Digging through TensorFlow I started by computing basic examples and
-comparing them to numpy's output. While doing this we found that in
-many cases there was a common theme of numerical approximation that
-theoretically should not have been present. Of course this brought me
-to pondering what would I have to do to get around these numerical
-errors that arise in software today?
+comparing them to numpy's output. While doing this I came across the
+common theme of numerical approximation that theoretically should not
+have been present. Of course this brought me to pondering what would I
+have to do to get around these numerical errors that arise in software
+today?
 
 In this article consider the situation were one passingly uses an SVD.
 
@@ -32,11 +32,16 @@ In this article consider the situation were one passingly uses an SVD.
 
 #+RESULTS:
 :RESULTS:
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  File "/tmp/babel-1959IYY/python-1959Mc0", line 1, in <module>
-    from graphviz import Digraph
-ModuleNotFoundError: No module named 'graphviz'
+|   1.0658141e-14 |  -4.4408921e-16 | -2.77555756e-16 | -1.33226763e-15 | -3.55271368e-15 | -5.99520433e-15 | -6.21724894e-15 |  2.22044605e-15 | -1.33226763e-15 | -1.55431223e-15 |
+|   8.8817842e-16 |   1.0658141e-14 |  1.33226763e-15 | -2.22044605e-15 | -1.88737914e-15 |  -1.0658141e-14 | -6.21724894e-15 |  -8.8817842e-16 | -3.66373598e-15 | -6.66133815e-15 |
+| -1.72084569e-15 |  1.77635684e-15 | -2.66453526e-15 | -3.55271368e-15 | -7.77156117e-16 | -2.88657986e-15 |  5.55111512e-16 |   8.8817842e-16 |  2.66453526e-15 |  7.77156117e-16 |
+| -4.88498131e-15 |  2.22044605e-16 | -2.22044605e-15 | -3.55271368e-15 |  1.77635684e-15 |  2.66453526e-15 | -7.21644966e-16 | -2.66453526e-15 |  1.33226763e-15 | -1.33226763e-15 |
+| -3.55271368e-15 | -7.77156117e-16 | -2.44249065e-15 | -1.77635684e-15 |  1.77635684e-15 |  3.10862447e-15 |  1.33226763e-15 |  -4.4408921e-16 | -1.94289029e-15 |  -8.8817842e-16 |
+| -3.77475828e-15 | -5.32907052e-15 | -2.55351296e-15 | -2.44249065e-15 |   4.4408921e-16 |  3.55271368e-15 |  8.43769499e-15 |  1.99840144e-15 |  1.44328993e-15 |  2.66453526e-15 |
+|  -8.8817842e-16 | -9.76996262e-15 |  3.33066907e-16 |  3.05311332e-15 |  2.22044605e-15 |  5.32907052e-15 | -1.77635684e-15 |   4.4408921e-16 |             0.0 |  3.55271368e-15 |
+|   4.4408921e-15 | -1.77635684e-15 |   4.4408921e-16 |  1.77635684e-15 | -1.33226763e-15 | -2.22044605e-16 | -1.55431223e-15 |  -8.8817842e-16 |  -4.4408921e-16 |   4.4408921e-16 |
+|   8.8817842e-16 |   4.4408921e-16 |  2.22044605e-16 |             0.0 | -2.22044605e-16 |  6.66133815e-16 |  1.33226763e-15 | -1.33226763e-15 |  -4.4408921e-15 | -1.55431223e-15 |
+|  -4.4408921e-16 | -1.77635684e-15 | -2.44249065e-15 | -2.22044605e-15 | -2.22044605e-15 |  3.55271368e-15 |             0.0 |  -8.8817842e-16 | -1.55431223e-15 |  -8.8817842e-16 |
 :END:
 
 Let's see if TensorFlow exhibits the same issue?
@@ -82,7 +87,7 @@ Let's see if TensorFlow exhibits the same issue?
 
 In regards to theory this should have been 0, but due to rounding
 errors mostly drawn from limitations of floats this is not the
-case. Natural questions to ask are "Is there a way around this?"
+case. Questions one might ask are "Is there a way around this?"
 and "Why would one care?"
 
 Answering the second question, one reason is of course optimizing
@@ -94,18 +99,14 @@ their respective fields.
 
 Moving back to the first question, one method is to think of the
 process of doing SVD above as a graph of operations. In this graph
-each node is the output of an operation that is the edge connecting
-nodes. What this would allow us to do is to traverse the graph looking
-for operations that could be reduced or removed all together. 
+each node is the output of an operation which are represented as the
+edge connecting nodes. What this would allow us to do is to traverse
+the graph looking for operations that could be reduced or removed all
+together.
 
-# This
-# could be broken down into two larger questions. the first and one
-# I'll focus on in this blog is how do I create a graph of operations?
-# The second is how do I determine what I'm looking at can be
-# reduced? 
 
 ** An analogy
-First let's consider an analogy using strings,
+Consider an analogy using strings,
 
 #+BEGIN_SRC python
 input_src_code = """
@@ -114,7 +115,11 @@ ans = S - matmul(u, d, v)
 """
 #+END_SRC
 
-Consider some src_python{optimize} function, that does the following:
+#+RESULTS:
+:RESULTS:
+:END:
+
+Consider some ~optimize~ function, that does the following:
 
 #+BEGIN_SRC python
 output_src_code = str_optimize(input_src_code)
@@ -129,17 +134,23 @@ ans = S - S
 """
 #+END_SRC
 
-In this we need to replace src_python{"matmul(u, d, v)"} with src_python{"S"}, but what
+In this we need to replace ~"matmul(u, d, v)"~ with ~"S"~, but what
 do we need in order to implement this? 
 
 1. Match the pattern for an SVD, e.g.
   #+BEGIN_SRC python
-  res = re.search("([a-zA-Z]+), ([a-zA-Z]+), ([a-zA-Z]+) = svd\(([a-zA-Z]+)\)", input_src_code)
-  U = res.group(1)
-  D = res.group(2)
-  V = res.group(3)
-  S = res.group(4)
+    import re
+    res = re.search("([a-zA-Z]+), ([a-zA-Z]+), ([a-zA-Z]+) = svd\(([a-zA-Z]+)\)", input_src_code)
+    U = res.group(1)
+    D = res.group(2)
+    V = res.group(3)
+    S = res.group(4)
   #+END_SRC
+
+  #+RESULTS:
+  :RESULTS:
+  :END:
+
 2. If it matches, match and replace the "matmul", e.g. with
   #+BEGIN_SRC python
   optimized_code = input_src_code.replace("matmul({}, {}, {})".format(U, D, V), S)
@@ -185,10 +196,15 @@ One that immediately strikes some interest is ~ans.op~.
 <tf.Operation 'sub_4' type=Sub>
 #+END_src
 
-For those that are new to TensorFlow an ~op~ or ~operation~ is a node
-that performs a computation on a tensor. Some of the properties
-included in ~op~ are ~inputs~ and ~outputs~. These could be what I'm
-looking for, Let's print them out.
+A ~tf.Operation~ is a node in the graph corresponds to a
+computation. Some of the properties included in ~tf.Operation~ are
+~inputs~ and ~outputs~. These could be the arguments to the operation
+and the outputs, which corresponds to "S" and "matmul(...)" for inputs
+and "ans" for outputs in ~input_src_code~.
+
+Using our analogy, the above TensorFlow operation is the subtraction
+in the string ~input_src_code~.
+
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
   _ = [ans.op.inputs._inputs, ans.op.outputs]
@@ -221,23 +237,28 @@ is "yes"! All I need to do is use the same methods I've used thus
 far.
 
 #+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
-  _ = ans.op.inputs._inputs[1].op.inputs._inputs[0].name
+  _ = ans.op.inputs._inputs[1].op.inputs._inputs[0].op
 #+END_SRC
 
 #+RESULTS:
 #+BEGIN_src python :eval never
-'Svd_4:1'
+<tf.Operation 'Svd_4' type=Svd>
 #+END_src
  
-At this point it's clear there exists a way to move between
-operations. From this it is possible to make a graph of
-operations. Having this graph for larger scale projects would allow
-for better methods of optimization. How one may ask? We would need a
-way to traverse a graph and find patterns. This idea is analogous to
-searching strings like in our opening analogy. In the later blog posts
-I'll dive into creating functions that parse this graph and make the
-required replacements much like our string analogy.
+This is like the "svd(...)" in our analogy, so the argument to this
+"string operator" is ~op.inputs~.
 
+At this point it's clear there exists a way to move through operations
+and get the corresponding inputs and outputs. How do we do this using TensorFlow? We
+know we would need a way to traverse a TensorFlow graph and find patterns like we
+did above, which is analogous to searching strings with ~re.search~ and
+replacing with ~str.replace~.
+
+
+In later blog posts I'll dive into creating functions that parse this
+graph and make the required replacements much like our string
+analogy. This is one of the main goals of the ~symbolic-pymc~ package
+I'll be working with during GSoC 2019.
 
 
 
