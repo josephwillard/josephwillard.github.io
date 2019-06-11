@@ -32,16 +32,16 @@ In this article consider the situation were one passingly uses an SVD.
 
 #+RESULTS:
 :RESULTS:
-|   1.0658141e-14 |  -4.4408921e-16 | -2.77555756e-16 | -1.33226763e-15 | -3.55271368e-15 | -5.99520433e-15 | -6.21724894e-15 |  2.22044605e-15 | -1.33226763e-15 | -1.55431223e-15 |
-|   8.8817842e-16 |   1.0658141e-14 |  1.33226763e-15 | -2.22044605e-15 | -1.88737914e-15 |  -1.0658141e-14 | -6.21724894e-15 |  -8.8817842e-16 | -3.66373598e-15 | -6.66133815e-15 |
-| -1.72084569e-15 |  1.77635684e-15 | -2.66453526e-15 | -3.55271368e-15 | -7.77156117e-16 | -2.88657986e-15 |  5.55111512e-16 |   8.8817842e-16 |  2.66453526e-15 |  7.77156117e-16 |
-| -4.88498131e-15 |  2.22044605e-16 | -2.22044605e-15 | -3.55271368e-15 |  1.77635684e-15 |  2.66453526e-15 | -7.21644966e-16 | -2.66453526e-15 |  1.33226763e-15 | -1.33226763e-15 |
-| -3.55271368e-15 | -7.77156117e-16 | -2.44249065e-15 | -1.77635684e-15 |  1.77635684e-15 |  3.10862447e-15 |  1.33226763e-15 |  -4.4408921e-16 | -1.94289029e-15 |  -8.8817842e-16 |
-| -3.77475828e-15 | -5.32907052e-15 | -2.55351296e-15 | -2.44249065e-15 |   4.4408921e-16 |  3.55271368e-15 |  8.43769499e-15 |  1.99840144e-15 |  1.44328993e-15 |  2.66453526e-15 |
-|  -8.8817842e-16 | -9.76996262e-15 |  3.33066907e-16 |  3.05311332e-15 |  2.22044605e-15 |  5.32907052e-15 | -1.77635684e-15 |   4.4408921e-16 |             0.0 |  3.55271368e-15 |
-|   4.4408921e-15 | -1.77635684e-15 |   4.4408921e-16 |  1.77635684e-15 | -1.33226763e-15 | -2.22044605e-16 | -1.55431223e-15 |  -8.8817842e-16 |  -4.4408921e-16 |   4.4408921e-16 |
-|   8.8817842e-16 |   4.4408921e-16 |  2.22044605e-16 |             0.0 | -2.22044605e-16 |  6.66133815e-16 |  1.33226763e-15 | -1.33226763e-15 |  -4.4408921e-15 | -1.55431223e-15 |
-|  -4.4408921e-16 | -1.77635684e-15 | -2.44249065e-15 | -2.22044605e-15 | -2.22044605e-15 |  3.55271368e-15 |             0.0 |  -8.8817842e-16 | -1.55431223e-15 |  -8.8817842e-16 |
+|  7.10542736e-15 | -1.15463195e-14 | -2.66453526e-15 |  1.24344979e-14 |  2.22044605e-15 | -6.66133815e-16 |  1.19904087e-14 |  -4.6629367e-15 |  3.33066907e-16 |   4.4408921e-15 |
+| -1.28785871e-14 |  5.32907052e-15 |  5.32907052e-15 | -5.32907052e-15 | -1.77635684e-15 |   8.8817842e-16 | -1.52655666e-14 |  1.77635684e-15 |   8.8817842e-15 | -3.55271368e-15 |
+|  1.24344979e-14 | -7.10542736e-15 |  -8.8817842e-15 |  1.77635684e-15 |  -8.8817842e-16 | -1.77635684e-15 |  8.43769499e-15 | -2.22044605e-15 | -2.66453526e-15 |  6.21724894e-15 |
+|   8.8817842e-15 | -1.64313008e-14 |  7.10542736e-15 | -1.77635684e-15 | -6.21724894e-15 |  -4.4408921e-16 |  5.32907052e-15 | -6.66133815e-15 |  2.22044605e-16 | -2.44249065e-15 |
+|  -4.4408921e-16 |             0.0 |  1.44328993e-15 |  -4.4408921e-15 | -1.77635684e-15 | -7.42461648e-16 | -1.99840144e-15 |  1.11022302e-15 |  2.22044605e-15 | -1.77635684e-15 |
+| -2.06501483e-14 |  1.66533454e-14 |  1.59872116e-14 | -9.76996262e-15 |  6.52256027e-16 |             0.0 | -1.33226763e-14 |   4.4408921e-15 |  5.77315973e-15 | -7.10542736e-15 |
+| -1.99840144e-14 |  1.06026299e-14 |   1.7985613e-14 | -7.10542736e-15 |  -8.8817842e-16 |  3.99680289e-15 | -1.42108547e-14 |  2.66453526e-15 |   4.4408921e-15 | -1.27675648e-14 |
+|  5.55111512e-15 | -2.66453526e-15 | -7.10542736e-15 |  1.77635684e-15 |  6.66133815e-16 |             0.0 |   4.4408921e-16 |  -8.8817842e-16 | -7.07767178e-16 |  2.66453526e-15 |
+|  3.33066907e-14 | -2.39808173e-14 | -2.04281037e-14 |  1.17683641e-14 |  -8.8817842e-16 | -3.99680289e-15 |  2.66453526e-14 | -7.91033905e-15 |  -1.0658141e-14 |  1.37667655e-14 |
+|  2.23154828e-14 | -1.42108547e-14 | -1.77635684e-14 |  1.02140518e-14 |  1.33226763e-15 |             0.0 |  1.44051437e-14 | -5.32907052e-15 | -7.10542736e-15 |  7.10542736e-15 |
 :END:
 
 Let's see if TensorFlow exhibits the same issue?
@@ -50,12 +50,11 @@ Let's see if TensorFlow exhibits the same issue?
   """ Seeing if tensorflow has the same issue
   """
   import tensorflow as tf
-  import tensorflow_probability as tfp
   from tensorflow.python.framework.ops import disable_eager_execution
 
 
   tf.compat.v1.InteractiveSession()
-  #disable_eager_execution()
+  disable_eager_execution()
 
   tfp = tfp.distributions
 
@@ -73,16 +72,16 @@ Let's see if TensorFlow exhibits the same issue?
 
 #+RESULTS:
 :RESULTS:
-| -2.30926389e-14 | -2.22044605e-14 | -1.77635684e-15 | -1.88737914e-15 |  7.10542736e-15 | -9.32587341e-15 |  2.66453526e-15 | -9.76996262e-15 | -2.87270208e-15 | -2.22738494e-15 |
-| -1.86517468e-14 | -3.90798505e-14 |  6.66133815e-15 |  5.32907052e-15 | -1.22124533e-15 | -1.95399252e-14 | -2.22044605e-15 |  -3.8719028e-15 |  -4.4408921e-16 |  1.11022302e-15 |
-| -3.10862447e-15 |  1.77635684e-15 | -2.48689958e-14 |  1.77635684e-15 |  1.19904087e-14 |   4.6629367e-15 |  6.21724894e-15 |  5.32907052e-15 |  2.39808173e-14 |  3.10862447e-15 |
-| -2.10942375e-15 |  3.55271368e-15 | -2.22044605e-15 | -1.59872116e-14 |  1.02140518e-14 |  7.99360578e-15 |  1.11022302e-15 |  5.30825384e-15 | -1.11022302e-14 | -1.33226763e-15 |
-|  4.88498131e-15 |  -8.8817842e-16 |  1.42108547e-14 |  8.43769499e-15 | -2.13162821e-14 | -6.06459327e-15 | -4.88498131e-15 | -4.88498131e-15 | -7.10542736e-15 |  1.99840144e-15 |
-| -3.99680289e-15 | -1.59872116e-14 |  9.32587341e-15 |   8.8817842e-15 | -6.75848266e-15 |  -8.8817842e-15 | -3.55271368e-15 | -5.32907052e-15 |             0.0 |  6.66133815e-16 |
-|   4.4408921e-16 | -3.55271368e-15 |  6.21724894e-15 |  2.22044605e-15 | -5.77315973e-15 | -3.55271368e-15 | -3.55271368e-15 |   8.8817842e-16 | -7.54951657e-15 | -1.60982339e-15 |
-| -7.54951657e-15 | -2.51187959e-15 |   8.8817842e-16 |  5.64132074e-15 | -3.44169138e-15 | -2.66453526e-15 |  1.44328993e-15 |  -8.8817842e-15 | -6.21724894e-15 | -5.32907052e-15 |
-| -7.99360578e-15 | -7.99360578e-15 |  2.13162821e-14 | -1.11022302e-14 |  -4.4408921e-16 |  -4.4408921e-15 | -3.99680289e-15 | -1.24344979e-14 | -1.77635684e-14 |  3.55271368e-15 |
-| -3.21270788e-15 |  -8.8817842e-16 |  9.76996262e-15 | -3.55271368e-15 |  3.33066907e-15 | -2.44249065e-15 | -1.38777878e-15 | -3.55271368e-15 |             0.0 |  1.77635684e-15 |
+| -3.01980663e-14 |  -4.4408921e-15 |  2.39808173e-14 |   4.4408921e-15 |  7.99360578e-15 |  -2.7533531e-14 |  1.37667655e-14 | -1.59872116e-14 |  2.48689958e-14 |  7.10542736e-15 |
+| -5.99520433e-15 | -1.24344979e-14 |  6.88338275e-15 | -1.24344979e-14 |  1.77635684e-15 | -1.82076576e-14 | -1.66533454e-15 | -5.77315973e-15 | -3.99680289e-15 | -1.95399252e-14 |
+|  2.13162821e-14 |  2.88657986e-15 | -1.77635684e-14 |  2.22044605e-15 | -7.99360578e-15 |  2.57571742e-14 | -1.02140518e-14 |  5.88418203e-15 | -1.55431223e-14 |  3.33066907e-16 |
+|  5.77315973e-15 | -1.77635684e-14 |  2.22044605e-16 | -1.77635684e-14 | -1.94289029e-15 |  -1.0658141e-14 |  -8.8817842e-15 |  4.99600361e-15 | -2.66453526e-15 | -2.13162821e-14 |
+|  7.77156117e-15 |  1.77635684e-15 |  -4.4408921e-15 | -1.22124533e-15 | -7.99360578e-15 |  1.46549439e-14 | -4.08006962e-15 | -1.99840144e-15 |  -1.0658141e-14 |  1.55431223e-15 |
+| -2.84217094e-14 |  -1.9095836e-14 |  2.66453526e-14 |  -8.8817842e-15 |  1.66533454e-14 | -4.08562073e-14 |  3.55271368e-15 | -7.77156117e-16 |  3.01980663e-14 | -1.59872116e-14 |
+|  1.28785871e-14 | -1.88737914e-15 |  -1.0658141e-14 |  -8.8817842e-15 |  -3.1918912e-15 |  -8.8817842e-16 | -4.97379915e-14 |  3.90798505e-14 |  1.19904087e-14 | -3.55271368e-14 |
+| -1.59872116e-14 | -5.32907052e-15 |  9.43689571e-15 |  5.32907052e-15 | -6.66133815e-16 | -2.44249065e-15 |  3.37507799e-14 | -2.48689958e-14 | -1.15463195e-14 |   1.0658141e-14 |
+|  2.30926389e-14 | -7.77156117e-16 | -1.28785871e-14 |  -8.8817842e-16 | -7.10542736e-15 |  2.57571742e-14 |  8.43769499e-15 | -1.24344979e-14 | -3.55271368e-14 |  1.15463195e-14 |
+|  4.88498131e-15 | -2.13162821e-14 | -2.22044605e-15 | -1.86517468e-14 |  3.77475828e-15 | -1.77635684e-14 | -3.73034936e-14 |  1.59872116e-14 |  1.50990331e-14 | -5.32907052e-14 |
 :END:
 
 In regards to theory this should have been 0, but due to rounding
@@ -159,7 +158,7 @@ do we need in order to implement this?
 Using this analogy how does this map back to the TensorFlow objects
 that we'll be working with?
 
-* What is a TensorFlow graph?
+* Graph reconstruction through TensorFlow
 
 To begin answering the first question, let's look at what our term
 ~ans~ has as objects outside of the standard assigned objects. As a
@@ -193,7 +192,7 @@ One that immediately strikes some interest is ~ans.op~.
 
 #+RESULTS:
 #+BEGIN_src python :eval never
-<tf.Operation 'sub_4' type=Sub>
+<tf.Operation 'sub' type=Sub>
 #+END_src
 
 A ~tf.Operation~ is a node in the graph corresponds to a
@@ -212,9 +211,9 @@ in the string ~input_src_code~.
 
 #+RESULTS:
 #+BEGIN_src python :eval never
-[[<tf.Tensor 'MatMul_12:0' shape=(10, 10) dtype=float64>,
-  <tf.Tensor 'MatMul_14:0' shape=(10, 10) dtype=float64>],
- [<tf.Tensor 'sub_4:0' shape=(10, 10) dtype=float64>]]
+[[<tf.Tensor 'MatMul:0' shape=(10, 10) dtype=float64>,
+  <tf.Tensor 'MatMul_2:0' shape=(10, 10) dtype=float64>],
+ [<tf.Tensor 'sub:0' shape=(10, 10) dtype=float64>]]
 #+END_src
 
 These look like references to the previous tensors that were
@@ -242,7 +241,7 @@ far.
 
 #+RESULTS:
 #+BEGIN_src python :eval never
-<tf.Operation 'Svd_4' type=Svd>
+<tf.Operation 'Svd' type=Svd>
 #+END_src
  
 This is like the "svd(...)" in our analogy, so the argument to this
@@ -254,85 +253,12 @@ know we would need a way to traverse a TensorFlow graph and find patterns like w
 did above, which is analogous to searching strings with ~re.search~ and
 replacing with ~str.replace~.
 
-
 In later blog posts I'll dive into creating functions that parse this
 graph and make the required replacements much like our string
 analogy. This is one of the main goals of the ~symbolic-pymc~ package
 I'll be working with during GSoC 2019.
 
-
-
-
-
-* remove move to different b                                                              :noexport:
-
-#+BEGIN_SRC python -n :exports both :results output
-  import symbolic_pymc.tensorflow
-  from symbolic_pymc.unify import (ExpressionTuple, etuple, tuple_expression)
-  z = tuple_expression(ans)
-#+END_SRC
-
-
-# add portion that talks about tuple_expression and unify against that
-
-#+NAME:
-#+BEGIN_SRC python -n :exports both :results output
-  from graphviz import Digraph
-
-  def tf_to_dot(graph):
-     dot = Digraph()
-     for n in graph.as_graph_def().node:
-         dot.node(n.name, label=n.name)
-         for i in n.input:
-             dot.edge(i, n.name)
-     return dot
-
-
-  dgraph = tf_to_dot(ans.graph)
-
-  dgraph.render('/tmp/graph.png', view=True)
-#+END_SRC
-
-#+CAPTION:
-
-#+BEGIN_SRC python
-input_src_code = """
-u, d, v = svd(S)
-ans = S - matmul(u, d, v)
-"""
-#+END_SRC
-
-Consider some src_python{optimize} function, that does the following:
-
-#+BEGIN_SRC python
-output_src_code = str_optimize(input_src_code)
-#+END_SRC
-
-where
-
-#+BEGIN_SRC python
-assert output_src_code == """
-u, d, v = svd(S)
-ans = S - S
-"""
-#+END_SRC
-
-In this we need to replace src_python{"matmul(u, d, v)"} with src_python{"S"}, but what
-*exactly* do we need in order to implement this? 
-
-1. Match the pattern for an SVD, e.g.
-  #+BEGIN_SRC python
-  res = re.search("([a-zA-Z]+), ([a-zA-Z]+), ([a-zA-Z]+) = svd\(([a-zA-Z]+)\)", input_src_code)
-  U = res.group(1)
-  D = res.group(2)
-  V = res.group(3)
-  S = res.group(4)
-  #+END_SRC
-2. If it matches, match and replace the "matmul", e.g. with
-  #+BEGIN_SRC python
-  optimized_code = input_src_code.replace("matmul({}, {}, {})".format(U, D, V), S)
-  #+END_SRC
-
+* remove move to different blog                                    :noexport:
 
 How does this analogy map to back the TensorFlow objects we have been working with? 
 
@@ -384,8 +310,6 @@ answer the questions posed at the beginning. In later posts I'll focus
 on this idea as it relates to the work I am doing for GSoC.
 
 
-
-
 * work                                                             :noexport:
 
 #+BEGIN_SRC python -n :exports both :results output
@@ -417,13 +341,11 @@ on this idea as it relates to the work I am doing for GSoC.
 
 #+CAPTION:
 
-
-* remove heading about tensorgraphs
-It's more about reconstructing the graph.
-Maybe add on this. 
-
-
-Also not that in tensorflow 2 op is removed (I ran this in tensorflow v1)
-
-
-remove this statement (import tensorflow_probability as tfp) 
+* Notes from Chris                                                 :noexport:
+** DONE remove heading about tensorgraphs
+*** It's more about reconstructing the graph. Maybe add on this?
+**** Changed title
+*** Also not that in tensorflow 2 op is removed (I ran this in tensorflow v1)
+**** Fixed env
+*** remove this statement (import tensorflow_probability as tfp) 
+**** 
