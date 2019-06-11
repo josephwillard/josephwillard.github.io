@@ -416,3 +416,14 @@ on this idea as it relates to the work I am doing for GSoC.
 #+END_SRC
 
 #+CAPTION:
+
+
+* remove heading about tensorgraphs
+It's more about reconstructing the graph.
+Maybe add on this. 
+
+
+Also not that in tensorflow 2 op is removed (I ran this in tensorflow v1)
+
+
+remove this statement (import tensorflow_probability as tfp) 
