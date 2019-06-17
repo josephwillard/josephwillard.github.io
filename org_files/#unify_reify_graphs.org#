@@ -1,0 +1,295 @@
+#+OPTIONS: toc:nil
+Title: Unifying Reifying and Symbolic-PyMC
+Author: Joseph Willard
+Date: 
+
+* Introduction
+Digging through tensorflow we started by computing basic examples and
+comparing them to numpy's output. While doing this we found that in
+many cases there was a common theme of numerical approximation that
+theoretically should not have been present. Of course this brought me
+to pondering what would we have to do to get around these numerical
+errors that arise in software today?
+
+In this article I'll start by walking through the two examples and
+show the numerical errors, then I'll muse on what could be done to get
+around this and introduce minikanren.
+
+* Motivation
+To start Let's look at a basic example using SVD.
+
+#+BEGIN_SRC python -n :exports both :results output
+  import numpy as np
+
+  X = np.random.normal(0, 1, (10, 10))
+  S = X.T.dot(X)
+  U, d, Vt = np.linalg.svd(S)
+  print(S - np.dot(U*d, Vt))
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+[[ 5.32907052e-15  4.88498131e-15  1.17683641e-14 -1.11022302e-16
+   5.77315973e-15 -7.99360578e-15  5.32907052e-15 -4.44089210e-15
+  -9.76996262e-15 -5.77315973e-15]
+ [-4.44089210e-16  3.55271368e-15  1.77635684e-15 -4.21884749e-15
+   3.55271368e-15 -4.88498131e-15  1.55431223e-15 -7.99360578e-15
+  -5.32907052e-15  2.22044605e-15]
+ [ 4.21884749e-15  4.44089210e-15 -5.32907052e-15 -2.20656826e-15
+   3.10862447e-15 -6.55031585e-15 -3.55271368e-15 -2.22044605e-15
+   8.88178420e-16 -8.88178420e-16]
+ [-2.16493490e-15 -1.55431223e-15 -8.32667268e-16 -2.22044605e-15
+  -1.11022302e-15 -2.22044605e-15 -4.71844785e-16  8.88178420e-16
+   2.66453526e-15 -1.33226763e-15]
+ [ 8.88178420e-16  2.66453526e-15  6.21724894e-15 -2.44249065e-15
+   6.21724894e-15 -3.55271368e-15  3.21964677e-15 -5.77315973e-15
+  -7.10542736e-15 -5.55111512e-16]
+ [-4.44089210e-15 -3.99680289e-15 -6.32827124e-15  1.33226763e-15
+  -3.55271368e-15  7.10542736e-15  2.05391260e-15  1.77635684e-15
+   4.88498131e-15  8.88178420e-16]
+ [ 4.88498131e-15  2.83106871e-15  0.00000000e+00  2.77555756e-17
+   4.44089210e-16  2.22044605e-16 -3.55271368e-15  1.44328993e-15
+   1.33226763e-15 -3.55271368e-15]
+ [-4.44089210e-15 -6.21724894e-15 -3.77475828e-15 -1.33226763e-15
+  -5.32907052e-15  8.88178420e-16 -5.55111512e-16  1.77635684e-15
+   5.32907052e-15  1.17961196e-16]
+ [-6.66133815e-15 -7.10542736e-15 -3.55271368e-15 -8.88178420e-16
+  -7.10542736e-15  3.55271368e-15 -2.22044605e-15  2.66453526e-15
+   5.32907052e-15  3.55271368e-15]
+ [-8.88178420e-16  3.55271368e-15 -3.99680289e-15  3.77475828e-15
+  -2.88657986e-15  6.66133815e-15  2.44249065e-15  3.92741395e-15
+   2.88657986e-15 -1.77635684e-15]]
+#+end_example
+
+# Do SVD in TF and see if it still has the numeric error and use this example
+#+BEGIN_SRC python -n :exports both :results output :session tf
+  """ Seeing if tensorflow has the same issue
+  """
+  import tensorflow as tf
+  import tensorflow_probability as tfp
+  from tensorflow.python.framework.ops import disable_eager_execution
+
+  tf.InteractiveSession()
+  disable_eager_execution()
+
+  tfp = tfp.distributions
+  X = tfp.Normal(loc=0, scale=1)
+  X = X.sample([10, 10])
+
+  S = tf.matmul(X, X, transpose_a=True)
+
+  d, U, V = tf.linalg.svd(S)
+
+  #ans = S - tf.tensordot(U*d, Vt, 1)
+  ans = S - tf.matmul(U, tf.matmul(tf.linalg.diag(d), V, adjoint_b=True))
+  print(ans.eval())
+  # Chris was suggesting something like this to turn off eager mode
+  # import tensorflow.compat.v2 as tf
+  # tf.enable_v2_behavior
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Python 3.6.0 |Continuum Analytics, Inc.| (default, Dec 23 2016, 12:22:00) 
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+WARNING: The TensorFlow contrib module will not be included in TensorFlow 2.0.
+For more information, please see:
+  ,* https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
+  ,* https://github.com/tensorflow/addons
+If you depend on functionality not listed there, please file an issue.
+
+2019-06-06 21:20:34.124532: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-06-06 21:20:34.143868: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 4200000000 Hz
+2019-06-06 21:20:34.144541: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x4c6cd60 executing computations on platform Host. Devices:
+2019-06-06 21:20:34.144570: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+[[-2.47955322e-05  1.33514404e-05  1.81198120e-05 -1.28746033e-05
+  -5.42402267e-06 -2.98023224e-06  7.62939453e-06  7.15255737e-06
+   5.72204590e-06 -3.57627869e-06]
+ [ 1.04904175e-05 -1.00135803e-05 -5.24520874e-06  2.14576721e-06
+   3.69548798e-06  1.66893005e-06 -5.96046448e-06 -8.58306885e-06
+  -1.07288361e-06 -4.29153442e-06]
+ [ 1.62124634e-05 -7.03334808e-06 -1.81198120e-05  1.28746033e-05
+   4.29153442e-06 -9.53674316e-07 -7.51018524e-06 -2.38418579e-06
+  -5.24520874e-06  2.62260437e-06]
+ [-1.09672546e-05  1.66893005e-06  1.23977661e-05 -7.62939453e-06
+  -2.14576721e-06 -2.68220901e-07  1.60932541e-06 -3.69548798e-06
+   5.24520874e-06 -9.53674316e-06]
+ [-4.82797623e-06  2.44379044e-06  5.24520874e-06 -3.09944153e-06
+   1.90734863e-06  9.53674316e-07  4.02331352e-06 -1.11758709e-07
+   6.55651093e-07 -1.19209290e-06]
+ [-3.09944153e-06  1.07288361e-06 -4.76837158e-07 -2.38418579e-07
+  -1.04308128e-07 -2.38418579e-07  5.36441803e-07  7.15255737e-07
+   1.16229057e-06  1.90734863e-06]
+ [ 6.91413879e-06 -6.91413879e-06 -8.22544098e-06  1.60932541e-06
+   4.61935997e-06  4.17232513e-07 -5.24520874e-06 -4.17232513e-06
+  -1.07288361e-06  0.00000000e+00]
+ [ 6.67572021e-06 -8.10623169e-06 -2.26497650e-06 -3.09944153e-06
+   9.68575478e-08  8.34465027e-07 -4.41074371e-06 -9.53674316e-07
+   2.14576721e-06 -7.15255737e-06]
+ [ 4.76837158e-06 -1.72853470e-06 -5.48362732e-06  5.36441803e-06
+   5.36441803e-07  1.31130219e-06 -1.43051147e-06  1.23679638e-06
+  -6.67572021e-06  4.41074371e-06]
+ [-4.17232513e-06 -3.57627869e-06  2.38418579e-06 -9.05990601e-06
+   0.00000000e+00  2.02655792e-06  9.53674316e-07 -8.10623169e-06
+   4.05311584e-06 -1.71661377e-05]]
+python.el: native completion setup loaded
+#+end_example
+
+In regards to theory this should have been 0, but due to rounding
+errors mostly drawn from limitations of floats this is not the case. A
+natural question to ask is whether there is a way around this. To
+provide an answer to this we need to introduce minikanren/logpy and
+the concepts of unify, reify and goals.
+
+# Maybe move to the bottom
+Why would we care about this? One reason is of course numerical
+accuracy. The other could be this idea of automating "pen and paper"
+math. This would allow someone with a domain specific skill set be it
+in probability, numerical analysis to be able to automate their
+"tricks" and demystify.
+
+Moving back to our issue with SVD above one way to go about
+implementing a substitution is to think of the process of doing SVD
+above as a graph of operations. To do this however we would need to be
+able to traverse the graph, which means that we would need to know variables parents. For example let's look at whwat the "ans" above and see what TensorFlow contains,
+
+
+#+BEGIN_SRC python -n :exports both :results output :session tf
+  dir(ans)
+#+END_SRC
+
+#+RESULTS:
+: ['OVERLOADABLE_OPERATORS', '__abs__', '__add__', '__and__', '__array_priority__', '__bool__', '__class__', '__copy__', '__delattr__', '__dict__', '__dir__', '__div__', '__doc__', '__eq__', '__floordiv__', '__format__', '__ge__', '__getattribute__', '__getitem__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__invert__', '__iter__', '__le__', '__lt__', '__matmul__', '__mod__', '__module__', '__mul__', '__ne__', '__neg__', '__new__', '__nonzero__', '__or__', '__pow__', '__radd__', '__rand__', '__rdiv__', '__reduce__', '__reduce_ex__', '__repr__', '__rfloordiv__', '__rmatmul__', '__rmod__', '__rmul__', '__ror__', '__rpow__', '__rsub__', '__rtruediv__', '__rxor__', '__setattr__', '__sizeof__', '__str__', '__sub__', '__subclasshook__', '__truediv__', '__weakref__', '__xor__', '_as_node_def_input', '_as_tf_output', '_c_api_shape', '_consumers', '_dtype', '_get_input_ops_without_shapes', '_id', '_op', '_override_operator', '_rank', '_shape', '_shape_as_list', '_shape_tuple', '_shape_val', '_tf_api_names', '_tf_api_names_v1', '_tf_output', '_value_index', 'consumers', 'device', 'dtype', 'eval', 'get_shape', 'graph', 'name', 'op', 'set_shape', 'shape', 'value_index']
+
+Looking at the dir object we see a few objects of interest, let's print the output of a few of them.
+
+#+BEGIN_SRC python -n :exports both :results output :session tf
+  print(ans.graph)
+  print(ans.op)
+  print(ans.name)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+<tensorflow.python.framework.ops.Graph object at 0x7fa09ecd5400>
+name: "sub"
+op: "Sub"
+input: "MatMul"
+input: "MatMul_2"
+attr {
+  key: "T"
+  value {
+    type: DT_FLOAT
+  }
+}
+
+sub:0
+#+end_example
+
+One that immediately strikes some interest is the output of
+"ans.op". Looking at it there is references to two inputs; "MatMul"
+and "MatMul_2" could we use this to determine what was subtracted?
+Let's look,
+
+
+#+BEGIN_SRC python -n :exports both :results raw :session tf
+  dir(ans.op)
+  list(ans.op.inputs)
+  list(ans.op.inputs)
+#+END_SRC
+
+#+RESULTS:
+[<tf.Tensor 'MatMul:0' shape=(10, 10) dtype=float32>, <tf.Tensor 'MatMul_2:0' shape=(10, 10) dtype=float32>]
+
+Here it looks like we have references to the previous tensors that were subtracted to create the answer we got above. Let's dig a little deeper yet into "ans".
+
+
+#+BEGIN_SRC python -n :exports both :results output :session tf
+
+#+END_SRC
+
+
+
+
+
+
+
+* Need to write down information that we need
+*** Talk about what comprises a TF object
+There exists an op field, etc. Identify SVD operation
+*** A way to get parents
+*** What components made up the multiplication
+
+*** show method to parse graph of operations and replace SVD example using minikanren. (need to do this with expository dialogue)
+
+
+#+BEGIN_SRC python -n :exports both :results output :session tf
+  def svd_optimize(graph):
+      # graph.op
+      # graph.op.inputs
+      # graph.op.outputs
+      # graph.op.op_def
+      # graph.op.get_value
+      # walk through these with ans
+      pass
+
+  svd_optimize(ans)
+
+  # This function produces a graph
+  tf.linalg.svd
+#+END_SRC
+
+
+
+* Old Notes
+** Unify
+The idea behind unify is to take two similar terms and form a *substitution* which can be thought of as a mapping between variables and values. Let's look at a few quick examples,
+
+| Constant | Variable | Substitution |
+| (4, 5)   | (x, 5)   | {x: 4}       |
+| 'test'   | 'txst'   | {x: 'e'}     |
+
+In layman's terms at this point we are looking for effectively the set of values that make the statement true. Below are some examples of terms that do not unify,
+
+| Constant | Variable | Substitution |
+| (4, 5)   | (3, x)   | NA           |
+| 'test'   | 'exror'  | NA           |
+
+** Reify
+Reify is the opposite operation to unify. This implies that it takes a variable and a substitution and returns a value that contains no variables. Below is a quick example,
+
+
+| Variable | Substitution | Constant |
+| (x, 10)  | {x: 5}       | (5, 10)  |
+| 'mxsic'  | {x: 'u'}     | 'music'  |
+
+** Goals and there constructors
+Using the two concepts above we can now introduce the idea of a goal. A goal is effectively a stream of substitutions which can be demonstrated in the following example,
+
+Given that `x is a member of both `(8, 5, 2) and `(5, 2, 9) a stream of substitutions are {x: 5}, {x: 2}.
+
+** Returning to our question
+Of course one would notice that there exists other librarys that would seemingly handle this issue. But what we want to do is create this idea of symbolic math that sits on top of existing libraries, effectively TensorFlow has no concept of symbolic math but we provide this. 
+
+** How does this relate to what I'm doing for GSoC?
+
+
+* issue example
+
+#+BEGIN_SRC python -n :exports both :results output
+  import tensorflow as tf
+  from symbolic_pymc.tensorflow.meta import mt
+
+  x = tf.compat.v1.placeholder(tf.float64, name='x',
+			      shape=tf.TensorShape([None, 1]))
+  y = tf.compat.v1.placeholder(tf.float64, name='y',
+			      shape=tf.TensorShape([None, 1]))
+  mt(x + y) == mt(x + y)
+  # update requirements
+#+END_SRC
+
+TFlowMetaOp.__eq__ shouldn't compare with TFlowMetaOp.name
+
+
+
