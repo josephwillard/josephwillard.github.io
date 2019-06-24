@@ -1,0 +1,294 @@
+#+Title: Unifying Reifying and Symbolic-PyMC Continued
+#+Author: Joseph Willard
+#+Date: 2019-24-06
+
+#+STARTUP: hideblocks indent hidestars
+#+OPTIONS: ^:nil toc:nil d:(not "logbook" "todo" "note" "notes") tex:t |:t broken-links:mark
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+
+#+PROPERTY: header-args :session tf :exports both :eval never-export :results output drawer replace
+#+PROPERTY: header-args:text :eval never
+#+OPTIONS: toc:nil
+
+* Introduction
+In the last blog post I focused on looking through TensorFlow objects
+and what could be used to recreate the graph of
+operations. Considering the analogy given in the first blog I should
+have enough information now to recreate the ~str_optimize~ function
+for TensorFlow. To do this I need the following,
+
+1. A function that takes the TensorFlow operation and creates the graph
+# TODO: expand on this
+2. Functions that search the graph and look for replacements 
+
+
+Below is our original problem from the first blog,
+#+NAME: original_code
+#+BEGIN_SRC python -n :results value
+  """ Seeing if tensorflow has the same issue
+  """
+  import numpy as np
+  import tensorflow as tf
+  from tensorflow.python.framework.ops import disable_eager_execution
+
+
+  tf.compat.v1.InteractiveSession()
+  disable_eager_execution()
+
+  X = np.random.normal(0, 1, (10, 10))
+
+  S = tf.matmul(X, X, transpose_a=True)
+
+  d, U, V = tf.linalg.svd(S)
+
+  D = tf.matmul(U, tf.matmul(tf.linalg.diag(d), V, adjoint_b=True))
+  ans = S - D
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+<tensorflow.python.client.session.InteractiveSession object at 0x7f9b556ce6a0>
+:END:
+
+
+
+* Graph Reconstruction Through TensorFlow Part 2
+Last blog I only described some of the objects of interest. Now, using
+~symbolic-pymc~ in particular the ~tf_dprint~ function we can inspect
+the graph.
+
+#+BEGIN_SRC python -n :results raw pp :wrap "src python :eval never"
+  from symbolic_pymc.tensorflow.printing import tf_dprint
+
+  _ = tf_dprint(ans)
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+Tensor(Sub):0,	shape=[10, 10]	"sub:0"
+|  Op(Sub)	"sub"
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"|
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_2:0"
+|  |  |  Op(MatMul)	"MatMul_2"
+|  |  |  |  Tensor(Svd):1,	shape=[10, 10]	"Svd:1"
+|  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+|  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_1:0"
+|  |  |  |  |  Op(MatMul)	"MatMul_1"
+|  |  |  |  |  |  Tensor(MatrixDiag):0,	shape=[10, 10]	"MatrixDiag:0"
+|  |  |  |  |  |  |  Op(MatrixDiag)	"MatrixDiag"
+|  |  |  |  |  |  |  |  Tensor(Svd):0,	shape=[10]	"Svd:0"
+|  |  |  |  |  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  |  |  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+|  |  |  |  |  |  Tensor(Svd):2,	shape=[10, 10]	"Svd:2"
+|  |  |  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+#+END_src
+
+Inspecting the output the top layer (furthest left) represents the
+subtraction that took place. Each subsequent step right moves
+effectively one step down in the list of operations until the original
+inputs are reached.
+
+From this point the next step is to write a function that can replace
+the below portion,
+
+#+NAME: input_block
+#+BEGIN_src python :eval never
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_2:0"
+|  |  |  Op(MatMul)	"MatMul_2"
+|  |  |  |  Tensor(Svd):1,	shape=[10, 10]	"Svd:1"
+|  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+|  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_1:0"
+|  |  |  |  |  Op(MatMul)	"MatMul_1"
+|  |  |  |  |  |  Tensor(MatrixDiag):0,	shape=[10, 10]	"MatrixDiag:0"
+|  |  |  |  |  |  |  Op(MatrixDiag)	"MatrixDiag"
+|  |  |  |  |  |  |  |  Tensor(Svd):0,	shape=[10]	"Svd:0"
+|  |  |  |  |  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  |  |  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+|  |  |  |  |  |  Tensor(Svd):2,	shape=[10, 10]	"Svd:2"
+|  |  |  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+#+END_src
+
+with the following:
+
+#+NAME: output_block
+#+BEGIN_src python :eval never
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+#+END_src
+
+How do we match graphs like [[input_block]] such that we obtain we obtain
+the argument of the "Svd" operator (i.e ~S~, the [[output_block]])? 
+
+
+
+* Unification and Reification
+
+The idea behind unification is to make two terms equal by finding
+substitutions for logic variables that would satisfy equality. A logic
+variable is like an unknown term in algebra and substitutions are
+simply a mapping between logic variables and values. Let's look at a
+few quick examples where ~x~ is a logic variable,
+
+#+BEGIN_SRC python -n :results value :wrap "src python :eval never"
+  from unification import unify, reify, var
+
+  x = var('x')
+  _ = [unify((4, x), (4, 5), {}),
+       unify(['t', x, 'est'], ['t', 'e', 'est'], {}),
+       unify((4, x), (2, 5), {})]
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+[{~x: 5}, {~x: 'e'}, False]
+#+END_src
+
+
+Reification is the opposite operation to unification. This implies that it takes a
+variable and a substitution and returns a value that contains no
+variables. Below is a quick example,
+
+#+BEGIN_SRC python -n :results value :wrap "src python :eval never"
+  from unification import unify, reify, var
+  _ = [reify(["m", x, "s", "i", "c"], {x:'u'}),
+       reify((4, x), {x: 5})]
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+[['m', 'u', 's', 'i', 'c'], (4, 5)]
+#+END_src
+
+The concepts of "unification" and "reification" are important in term
+rewriting, and what we have been discussing up to this point is term
+rewriting!
+
+Now, we want to unify [[input_block]] with another graph containing a
+logic variable as the input for an "Svd". We can then use this logic
+variable to reify.
+
+#+NAME: mold_block
+#+BEGIN_src python :eval never
+  from symbolic_pymc.tensorflow.meta import mt
+
+  # d, U, V = mt.linalg.svd(var('S'))
+  d, U, V = var(), var(), var()
+  template_mt = mt.matmul(U, mt.matmul(mt.matrixdiag(d, name=var()), V,
+                                              transpose_a=False, transpose_b=True, name=var()),
+                          transpose_a=False, transpose_b=False, name=var())
+  D_mt = mt(D)
+
+  s = unify(D_mt, template_mt, {})
+  reify(var('S'), s)
+#+END_src
+
+
+# Need to show how this satisfies requirements for example
+# 1. Needs to match two graphs
+# 2. Needs to get terms from matched graph (the terms that are S)
+# Replace matched terms with S
+# 1. Need reification (to create new term)
+
+How do we do this with a TensorFlow graph? Using the unification
+ library we already have support for most basic builtin types such as
+ "str", "tuple" and "list". However, unification can be extended
+ further by modifying ~_unify~ and ~_reify~. This extension is
+ something that ~Symbolic_PyMC~ uses to manipulate TensorFlow graphs.
+# ~unify~ and ~reify~ need to be aware of types. 
+# Already has support for most builtin types.
+# can be extended by specializing _unify and _reify.
+
+
+
+
+
+** Work                                                           :noexport:
+
+#+BEGIN_SRC python -n :results raw pp :wrap "src python :eval never"
+  from unification import unify, reify, var
+  "".join(reify(["m", x, "sic"], {x:'u'}))
+#+END_SRC
+
+
+* Creating an optimizing function                                                      :noexport:
+
+To properly optimize the ~ans~ object we need to search the graph and do the following,
+
+1. Find the object in "Sub" that contains the "Svd" operation.
+2. Determine if the "Svd" operation is related to the second operation in "Sub"
+3. If they are related then we need to replace the first object with the second object
+
+** Work                                                           :noexport:
+
+#+BEGIN_SRC python -n :results raw pp :wrap "src python :eval never"
+  def optimize_graph(obj):
+
+      # loop through inputs and see if any have an svd type
+      svd_op = None
+      # get operation that contains svd
+      for i in obj.op.inputs._inputs:
+          for j in i.op.inputs._inputs:
+              if 'Svd' in j.name:
+                  svd_op = i
+
+      # checking if 
+#+END_SRC
+
+
+The idea behind unification is to make two terms equal by finding
+substitutions for logic variables that would satisfy equality. A logic
+variable is like an unknown term in algebra and substitutions are
+simply a mapping between logic variables and values. Let's look at a
+few quick examples where ~x~ is a logic variable,
+
+| Term 1 | Term 2  | Substitution |
+|--------+---------+--------------|
+| (4, 5) | (x, 5)  | {x: 4}       |
+| 'test' | 'txst'  | {x: 'e'}     |
+| (4, 5) | (3, x)  | NA           |
+| 'test' | 'exror' | NA           |
+
+
+Reification is the opposite operation to unification. This implies that it takes a
+variable and a substitution and returns a value that contains no
+variables. Below is a quick example,
+
+| Term               | Substitution | Output  |
+| (x, 10)            | {x: 5}       | (5, 10) |
+
+The concepts of "unification" and "reification" are important in term
+rewriting. What we have been discussing up to this point is term
+rewriting!
+
+Using unification we can take two graphs and match them. We can also
+get matched terms from graph. Using reification we can then replace
+all matched terms with our optimized substitution (~S~ in our
+example).
