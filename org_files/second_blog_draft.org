@@ -11,29 +11,21 @@
 #+PROPERTY: header-args:text :eval never
 #+OPTIONS: toc:nil
 
-* Introduction
+* Graph Reconstruction Through TensorFlow Part 2
 In the last blog post I focused on looking through TensorFlow objects
-and what could be used to recreate the graph of
+and what could be used within these to recreate the graph of
 operations. Considering the analogy given in the first blog I should
 have enough information now to recreate the ~str_optimize~ function
-for TensorFlow. To do this I need the following,
+for TensorFlow.
 
-1. A function that takes the TensorFlow operation and creates the graph
-# TODO: expand on this
-2. Functions that search the graph and look for replacements 
-
-
-Below is our original problem from the first blog,
 #+NAME: original_code
-#+BEGIN_SRC python -n :results value
+#+BEGIN_SRC python -n 
   """ Seeing if tensorflow has the same issue
   """
   import numpy as np
   import tensorflow as tf
   from tensorflow.python.framework.ops import disable_eager_execution
 
-
-  tf.compat.v1.InteractiveSession()
   disable_eager_execution()
 
   X = np.random.normal(0, 1, (10, 10))
@@ -46,17 +38,12 @@ Below is our original problem from the first blog,
   ans = S - D
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS: original_code
 :RESULTS:
-<tensorflow.python.client.session.InteractiveSession object at 0x7f9b556ce6a0>
 :END:
 
-
-
-* Graph Reconstruction Through TensorFlow Part 2
-Last blog I only described some of the objects of interest. Now, using
-~symbolic-pymc~ in particular the ~tf_dprint~ function we can inspect
-the graph.
+Using ~symbolic-pymc~ in particular the ~tf_dprint~ function we
+can inspect the graph.
 
 #+BEGIN_SRC python -n :results raw pp :wrap "src python :eval never"
   from symbolic_pymc.tensorflow.printing import tf_dprint
@@ -66,42 +53,41 @@ the graph.
 
 #+RESULTS:
 #+BEGIN_src python :eval never
-Tensor(Sub):0,	shape=[10, 10]	"sub:0"
-|  Op(Sub)	"sub"
-|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
-|  |  |  Op(MatMul)	"MatMul"
-|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"|
-|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
-|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_2:0"
-|  |  |  Op(MatMul)	"MatMul_2"
-|  |  |  |  Tensor(Svd):1,	shape=[10, 10]	"Svd:1"
-|  |  |  |  |  Op(Svd)	"Svd"
-|  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
-|  |  |  |  |  |  |  Op(MatMul)	"MatMul"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
-|  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_1:0"
-|  |  |  |  |  Op(MatMul)	"MatMul_1"
-|  |  |  |  |  |  Tensor(MatrixDiag):0,	shape=[10, 10]	"MatrixDiag:0"
-|  |  |  |  |  |  |  Op(MatrixDiag)	"MatrixDiag"
-|  |  |  |  |  |  |  |  Tensor(Svd):0,	shape=[10]	"Svd:0"
-|  |  |  |  |  |  |  |  |  Op(Svd)	"Svd"
-|  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
-|  |  |  |  |  |  |  |  |  |  |  Op(MatMul)	"MatMul"
-|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
-|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
-|  |  |  |  |  |  Tensor(Svd):2,	shape=[10, 10]	"Svd:2"
-|  |  |  |  |  |  |  Op(Svd)	"Svd"
-|  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
-|  |  |  |  |  |  |  |  |  Op(MatMul)	"MatMul"
-|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
-|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
+Tensor(Sub):0,	shape=[10, 10]	"sub_1:0"
+|  Op(Sub)	"sub_1"
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_3:0"
+|  |  |  Op(MatMul)	"MatMul_3"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/a:0"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/b:0"
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_5:0"
+|  |  |  Op(MatMul)	"MatMul_5"
+|  |  |  |  Tensor(Svd):1,	shape=[10, 10]	"Svd_1:1"
+|  |  |  |  |  Op(Svd)	"Svd_1"
+|  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_3:0"
+|  |  |  |  |  |  |  Op(MatMul)	"MatMul_3"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/a:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/b:0"
+|  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_4:0"
+|  |  |  |  |  Op(MatMul)	"MatMul_4"
+|  |  |  |  |  |  Tensor(MatrixDiag):0,	shape=[10, 10]	"MatrixDiag_1:0"
+|  |  |  |  |  |  |  Op(MatrixDiag)	"MatrixDiag_1"
+|  |  |  |  |  |  |  |  Tensor(Svd):0,	shape=[10]	"Svd_1:0"
+|  |  |  |  |  |  |  |  |  Op(Svd)	"Svd_1"
+|  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_3:0"
+|  |  |  |  |  |  |  |  |  |  |  Op(MatMul)	"MatMul_3"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/a:0"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/b:0"
+|  |  |  |  |  |  Tensor(Svd):2,	shape=[10, 10]	"Svd_1:2"
+|  |  |  |  |  |  |  Op(Svd)	"Svd_1"
+|  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_3:0"
+|  |  |  |  |  |  |  |  |  Op(MatMul)	"MatMul_3"
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/a:0"
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/b:0"
 #+END_src
 
-Inspecting the output the top layer (furthest left) represents the
-subtraction that took place. Each subsequent step right moves
-effectively one step down in the list of operations until the original
-inputs are reached.
+The output the top layer (furthest left) represents the subtraction
+that took place. Each subsequent step right moves effectively one step
+down in the list of operations until the original inputs are reached.
 
 From this point the next step is to write a function that can replace
 the below portion,
@@ -147,8 +133,6 @@ with the following:
 How do we match graphs like [[input_block]] such that we obtain we obtain
 the argument of the "Svd" operator (i.e ~S~, the [[output_block]])? 
 
-
-
 * Unification and Reification
 
 The idea behind unification is to make two terms equal by finding
@@ -191,25 +175,6 @@ The concepts of "unification" and "reification" are important in term
 rewriting, and what we have been discussing up to this point is term
 rewriting!
 
-Now, we want to unify [[input_block]] with another graph containing a
-logic variable as the input for an "Svd". We can then use this logic
-variable to reify.
-
-#+NAME: mold_block
-#+BEGIN_src python :eval never
-  from symbolic_pymc.tensorflow.meta import mt
-
-  # d, U, V = mt.linalg.svd(var('S'))
-  d, U, V = var(), var(), var()
-  template_mt = mt.matmul(U, mt.matmul(mt.matrixdiag(d, name=var()), V,
-                                              transpose_a=False, transpose_b=True, name=var()),
-                          transpose_a=False, transpose_b=False, name=var())
-  D_mt = mt(D)
-
-  s = unify(D_mt, template_mt, {})
-  reify(var('S'), s)
-#+END_src
-
 
 # Need to show how this satisfies requirements for example
 # 1. Needs to match two graphs
@@ -217,17 +182,95 @@ variable to reify.
 # Replace matched terms with S
 # 1. Need reification (to create new term)
 
+Now, we want to unify [[input_block]] with another graph containing a
+logic variable as the input for an "Svd". We can then use this logic
+variable to reify.
+
+# ~unify~ and ~reify~ need to be aware of types. 
+# Already has support for most builtin types.
+# can be extended by specializing _unify and _reify.
+
 How do we do this with a TensorFlow graph? Using the unification
  library we already have support for most basic builtin types such as
  "str", "tuple" and "list". However, unification can be extended
  further by modifying ~_unify~ and ~_reify~. This extension is
  something that ~Symbolic_PyMC~ uses to manipulate TensorFlow graphs.
-# ~unify~ and ~reify~ need to be aware of types. 
-# Already has support for most builtin types.
-# can be extended by specializing _unify and _reify.
+
+#+NAME: mold_block
+#+BEGIN_src python -n
+  from symbolic_pymc.tensorflow.meta import mt
+
+  S_lv = var()
+  d_mt, U_mt, V_mt = mt.linalg.svd(S, compute_uv=var(),
+                          full_matrices=var(), name=var())
+
+  template_mt = mt.matmul(U, mt.matmul(mt.matrixdiag(d, name=var()), V,
+                                              transpose_a=False, transpose_b=True, name=var()),
+                          transpose_a=False, transpose_b=False, name=var())
+#+END_SRC
+
+#+RESULTS: mold_block
+:RESULTS:
+:END:
+
+#+BEGIN_SRC python -n :results value :wrap "src python :eval never"
+  D_mt = mt(D)
+  s = unify(D_mt, template_mt, {})
+  _ = s
+#+END_src
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+{~_27: tf.float64, ~_23: tf.float64, ~_19: tf.float64, ~_18: 'MatrixDiag_1', ~_20: TFlowMetaTensorShape([Dimension(10), Dimension(10)],, obj=TensorShape([10, 10])), ~_21: 'MatrixDiag_1:0', ~_22: 'MatMul_4', ~_24: TFlowMetaTensorShape([Dimension(10), Dimension(10)],, obj=TensorShape([10, 10])), ~_25: 'MatMul_4:0', ~_26: 'MatMul_5', ~_28: TFlowMetaTensorShape([Dimension(10), Dimension(10)],, obj=TensorShape([10, 10])), ~_29: 'MatMul_5:0'}
+#+END_src
+
+Reification in this case is straightforward.
+
+#+BEGIN_SRC python -n :results value :wrap "src python :eval never"
+  _ = reify(S_lv, s)
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+~_5
+#+END_src
+
+# Need to walk graph and unify every element
+# If it unifies then replace
+# Reification is useful when it's the original(input_graph --> 'ans') graph with large matrix mult replaced with S_lv
+In our running example we would walk the graph i.e. ~ans~ in our
+case. The output would be a new graph where [[input_block]] has been
+replaced with ~S_lv~. What can we use to implement walking through a
+graph?
+
+
+The concepts of unification and reification are encapsulated in the
+language [[http://minikanren.org/][miniKanren]] as ~eq~ and ~run~ respectively. Luckily, miniKanren has a python
+implementation! 
+
+
+#+BEGIN_SRC python -n :results value :wrap "src python :eval never"
+  from kanren import eq, run
+  x = var()
+  _ = run(1, x, eq((1, 2), (1, x)))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+(2,)
+#+END_src
+
+In later posts I'll go into exactly how ~Symbolic-PyMc~ uses
+miniKanren while adding relations such as ~graph_applyo~ to walk and
+replace sections.
 
 
 
+# Introduce minikanren and run statement
+# demonstrate 'eq' in kanren package (same as unify)
+# reification is done by 'run'
+# In symbolic-pymc we've added other relations that will walk a graph and apply these matches 
+# Called graph_applyo(relation, input_graph, output_graph)
 
 
 ** Work                                                           :noexport:
