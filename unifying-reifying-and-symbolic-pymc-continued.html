@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Unifying Reifying and Symbolic-PyMC Continued</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Joseph Willard">
+
+    <!-- Le styles -->
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+      .tag-1 {
+        font-size: 13pt;
+      }
+      .tag-2 {
+        font-size: 10pt;
+      }
+      .tag-2 {
+        font-size: 8pt;
+      }
+      .tag-4 {
+        font-size: 6pt;
+     }
+    </style>
+    <link href="/theme/css/bootstrap-responsive.min.css" rel="stylesheet">
+        <link href="/theme/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/theme/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/theme/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/theme/images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/theme/images/apple-touch-icon-114x114.png">
+
+    <link href="/" type="application/atom+xml" rel="alternate" title="Joseph Willard's Blog ATOM Feed" />
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="/index.html">Joseph Willard's Blog </a>
+          <div class="nav-collapse">
+            <ul class="nav">
+                <li><a href="/pages/about-me.html">About Me</a></li>
+                          <li class="divider-vertical"></li>
+                  <li class="active">
+                    <a href="/category/gsoc.html">
+						<i class="icon-folder-open icon-large"></i>GSoC
+					</a>
+                  </li>
+                  <li >
+                    <a href="/category/misc.html">
+						<i class="icon-folder-open icon-large"></i>misc
+					</a>
+                  </li>
+
+                          <ul class="nav pull-right">
+                                <li><a href="/archives.html"><i class="icon-th-list"></i>Archives</a></li>
+                          </ul>
+
+            </ul>
+            <!--<p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>-->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="span9" id="content">
+<section id="content">
+        <article>
+                <header>
+                        <h1>
+                                <a href=""
+                                        rel="bookmark"
+                                        title="Permalink to Unifying Reifying and Symbolic-PyMC Continued">
+                                        Unifying Reifying and Symbolic-PyMC Continued
+                                </a>
+                        </h1>
+                </header>
+                <div class="entry-content">
+                <div class="well">
+<footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2019-06-24T00:00:00-04:00">
+        <i class="icon-calendar"></i>Mon 24 June 2019
+</abbr>
+<span class="label">By</span>
+<a href="/author/joseph-willard.html"><i class="icon-user"></i>Joseph Willard</a>
+<span class="label">Category</span>
+<a href="/category/gsoc.html"><i class="icon-folder-open"></i>GSoC</a>.
+
+
+</footer><!-- /.post-info -->                </div>
+                <h1>Graph Reconstruction Through TensorFlow Part 2</h1>
+<p>In the last blog post I focused on looking through TensorFlow objects
+and what could be used within these to recreate the graph of
+operations. Considering the analogy given in the first blog I should
+have enough information now to recreate the <code>str_optimize</code> function
+for TensorFlow.</p>
+<div class="highlight"><pre><span></span> <span class="mi">1</span>  <span class="s2">&quot;&quot;&quot; Seeing if tensorflow has the same issue</span>
+<span class="s2"> 2  &quot;&quot;&quot;</span>
+ <span class="mi">3</span>  <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+ <span class="mi">4</span>  <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="kn">as</span> <span class="nn">tf</span>
+ <span class="mi">5</span>  <span class="kn">from</span> <span class="nn">tensorflow.python.framework.ops</span> <span class="kn">import</span> <span class="n">disable_eager_execution</span>
+ <span class="mi">6</span>  
+ <span class="mi">7</span>  <span class="n">disable_eager_execution</span><span class="p">()</span>
+ <span class="mi">8</span>  
+ <span class="mi">9</span>  <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="mi">10</span>  
+<span class="mi">11</span>  <span class="n">S</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">transpose_a</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="mi">12</span>  
+<span class="mi">13</span>  <span class="n">d</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="kp">svd</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+<span class="mi">14</span>  
+<span class="mi">15</span>  <span class="n">D</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="kp">diag</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">V</span><span class="p">,</span> <span class="n">adjoint_b</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+<span class="mi">16</span>  <span class="n">ans</span> <span class="o">=</span> <span class="n">S</span> <span class="o">-</span> <span class="n">D</span>
+</pre></div>
+
+
+<p>Using <code>symbolic-pymc</code> in particular the <code>tf_dprint</code> function we
+can inspect the graph.</p>
+<div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.tensorflow.printing</span> <span class="kn">import</span> <span class="n">tf_dprint</span>
+<span class="mi">2</span>  
+<span class="mi">3</span>  <span class="n">_</span> <span class="o">=</span> <span class="n">tf_dprint</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
+
+<span class="n">Tensor</span><span class="p">(</span><span class="n">Sub</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;sub_1:0&quot;</span>
+<span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Sub</span><span class="p">)</span>  <span class="s2">&quot;sub_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span> <span class="s2">&quot;MatMul_3&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3/a:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3/b:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_5:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span> <span class="s2">&quot;MatMul_5&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Svd</span><span class="p">):</span><span class="mi">1</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;Svd_1:1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Svd</span><span class="p">)</span>  <span class="s2">&quot;Svd_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span> <span class="s2">&quot;MatMul_3&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3/a:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3/b:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>   <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_4:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span>   <span class="s2">&quot;MatMul_4&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatrixDiag</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatrixDiag_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatrixDiag</span><span class="p">)</span> <span class="s2">&quot;MatrixDiag_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Svd</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;Svd_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Svd</span><span class="p">)</span>  <span class="s2">&quot;Svd_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span> <span class="s2">&quot;MatMul_3&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3/a:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3/b:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Svd</span><span class="p">):</span><span class="mi">2</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;Svd_1:2&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Svd</span><span class="p">)</span>    <span class="s2">&quot;Svd_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>   <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span>   <span class="s2">&quot;MatMul_3&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3/a:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_3/b:0&quot;</span>
+</pre></div>
+
+
+<p>The output the top layer (furthest left) represents the subtraction
+that took place. Each subsequent step right moves effectively one step
+down in the list of operations until the original inputs are reached.</p>
+<p>From this point the next step is to write a function that can replace
+the below portion,</p>
+<div class="highlight"><pre><span></span>|  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul_2:0&quot;
+|  |  |  Op(MatMul) &quot;MatMul_2&quot;
+|  |  |  |  Tensor(Svd):1,  shape=[10, 10]  &quot;Svd:1&quot;
+|  |  |  |  |  Op(Svd)  &quot;Svd&quot;
+|  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
+|  |  |  |  |  |  |  Op(MatMul) &quot;MatMul&quot;
+|  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
+|  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/b:0&quot;
+|  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  &quot;MatMul_1:0&quot;
+|  |  |  |  |  Op(MatMul)   &quot;MatMul_1&quot;
+|  |  |  |  |  |  Tensor(MatrixDiag):0, shape=[10, 10]  &quot;MatrixDiag:0&quot;
+|  |  |  |  |  |  |  Op(MatrixDiag) &quot;MatrixDiag&quot;
+|  |  |  |  |  |  |  |  Tensor(Svd):0,  shape=[10]  &quot;Svd:0&quot;
+|  |  |  |  |  |  |  |  |  Op(Svd)  &quot;Svd&quot;
+|  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
+|  |  |  |  |  |  |  |  |  |  |  Op(MatMul) &quot;MatMul&quot;
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/b:0&quot;
+|  |  |  |  |  |  Tensor(Svd):2,    shape=[10, 10]  &quot;Svd:2&quot;
+|  |  |  |  |  |  |  Op(Svd)    &quot;Svd&quot;
+|  |  |  |  |  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  &quot;MatMul:0&quot;
+|  |  |  |  |  |  |  |  |  Op(MatMul)   &quot;MatMul&quot;
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  &quot;MatMul/a:0&quot;
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  &quot;MatMul/b:0&quot;
+</pre></div>
+
+
+<p>with the following:</p>
+<div class="highlight"><pre><span></span>|  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
+|  |  |  Op(MatMul) &quot;MatMul&quot;
+|  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
+|  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/b:0&quot;
+</pre></div>
+
+
+<p>How do we match graphs like <a href="#org4e73f52">4</a> such that we obtain we obtain
+the argument of the "Svd" operator (i.e <code>S</code>, the <a href="#org7ea3d77">5</a>)? </p>
+<h1>Unification and Reification</h1>
+<p>The idea behind unification is to make two terms equal by finding
+substitutions for logic variables that would satisfy equality. A logic
+variable is like an unknown term in algebra and substitutions are
+simply a mapping between logic variables and values. Let's look at a
+few quick examples where <code>x</code> is a logic variable,</p>
+<div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="kn">from</span> <span class="nn">unification</span> <span class="kn">import</span> <span class="n">unify</span><span class="p">,</span> <span class="n">reify</span><span class="p">,</span> <span class="n">var</span>
+<span class="mi">2</span>  
+<span class="mi">3</span>  <span class="n">x</span> <span class="o">=</span> <span class="n">var</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="mi">4</span>  <span class="n">_</span> <span class="o">=</span> <span class="p">[</span><span class="n">unify</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">{}),</span>
+<span class="mi">5</span>       <span class="n">unify</span><span class="p">([</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;est&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="s1">&#39;e&#39;</span><span class="p">,</span> <span class="s1">&#39;est&#39;</span><span class="p">],</span> <span class="p">{}),</span>
+<span class="mi">6</span>       <span class="n">unify</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">{})]</span>
+
+<span class="p">[{</span><span class="o">~</span><span class="n">x</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span> <span class="p">{</span><span class="o">~</span><span class="n">x</span><span class="p">:</span> <span class="s1">&#39;e&#39;</span><span class="p">},</span> <span class="bp">False</span><span class="p">]</span>
+</pre></div>
+
+
+<p>Reification is the opposite operation to unification. This implies that it takes a
+variable and a substitution and returns a value that contains no
+variables. Below is a quick example,</p>
+<div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="kn">from</span> <span class="nn">unification</span> <span class="kn">import</span> <span class="n">unify</span><span class="p">,</span> <span class="n">reify</span><span class="p">,</span> <span class="n">var</span>
+<span class="mi">2</span>  <span class="n">_</span> <span class="o">=</span> <span class="p">[</span><span class="n">reify</span><span class="p">([</span><span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">],</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="s1">&#39;u&#39;</span><span class="p">}),</span>
+<span class="mi">3</span>       <span class="n">reify</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="mi">5</span><span class="p">})]</span>
+
+<span class="p">[[</span><span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;u&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">],</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">)]</span>
+</pre></div>
+
+
+<p>The concepts of "unification" and "reification" are important in term
+rewriting, and what we have been discussing up to this point is term
+rewriting!</p>
+<p>Now, we want to unify <a href="#org4e73f52">4</a> with another graph containing a
+logic variable as the input for an "Svd". We can then use this logic
+variable to reify.</p>
+<p>How do we do this with a TensorFlow graph? Using the unification
+ library we already have support for most basic builtin types such as
+ "str", "tuple" and "list". However, unification can be extended
+ further by modifying <code>_unify</code> and <code>_reify</code>. This extension is
+ something that <code>Symbolic_PyMC</code> uses to manipulate TensorFlow graphs.</p>
+<div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.tensorflow.meta</span> <span class="kn">import</span> <span class="n">mt</span>
+<span class="mi">2</span>  
+<span class="mi">3</span>  <span class="n">S_lv</span> <span class="o">=</span> <span class="n">var</span><span class="p">()</span>
+<span class="mi">4</span>  <span class="n">d_mt</span><span class="p">,</span> <span class="n">U_mt</span><span class="p">,</span> <span class="n">V_mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">compute_uv</span><span class="o">=</span><span class="n">var</span><span class="p">(),</span>
+<span class="mi">5</span>           <span class="n">full_matrices</span><span class="o">=</span><span class="n">var</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">())</span>
+<span class="mi">6</span>  
+<span class="mi">7</span>  <span class="n">template_mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">mt</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">matrixdiag</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">()),</span> <span class="n">V</span><span class="p">,</span>
+<span class="mi">8</span>                       <span class="n">transpose_a</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">transpose_b</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">()),</span>
+<span class="mi">9</span>           <span class="n">transpose_a</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">transpose_b</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">())</span>
+
+<span class="mi">1</span>  <span class="n">D_mt</span> <span class="o">=</span> <span class="n">mt</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+<span class="mi">2</span>  <span class="n">s</span> <span class="o">=</span> <span class="n">unify</span><span class="p">(</span><span class="n">D_mt</span><span class="p">,</span> <span class="n">template_mt</span><span class="p">,</span> <span class="p">{})</span>
+<span class="mi">3</span>  <span class="n">_</span> <span class="o">=</span> <span class="n">s</span>
+
+<span class="p">{</span><span class="o">~</span><span class="n">_27</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="o">~</span><span class="n">_23</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="o">~</span><span class="n">_19</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="o">~</span><span class="n">_18</span><span class="p">:</span> <span class="s1">&#39;MatrixDiag_1&#39;</span><span class="p">,</span> <span class="o">~</span><span class="n">_20</span><span class="p">:</span> <span class="n">TFlowMetaTensorShape</span><span class="p">([</span><span class="n">Dimension</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">Dimension</span><span class="p">(</span><span class="mi">10</span><span class="p">)],,</span> <span class="n">obj</span><span class="o">=</span><span class="n">TensorShape</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">])),</span> <span class="o">~</span><span class="n">_21</span><span class="p">:</span> <span class="s1">&#39;MatrixDiag_1:0&#39;</span><span class="p">,</span> <span class="o">~</span><span class="n">_22</span><span class="p">:</span> <span class="s1">&#39;MatMul_4&#39;</span><span class="p">,</span> <span class="o">~</span><span class="n">_24</span><span class="p">:</span> <span class="n">TFlowMetaTensorShape</span><span class="p">([</span><span class="n">Dimension</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">Dimension</span><span class="p">(</span><span class="mi">10</span><span class="p">)],,</span> <span class="n">obj</span><span class="o">=</span><span class="n">TensorShape</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">])),</span> <span class="o">~</span><span class="n">_25</span><span class="p">:</span> <span class="s1">&#39;MatMul_4:0&#39;</span><span class="p">,</span> <span class="o">~</span><span class="n">_26</span><span class="p">:</span> <span class="s1">&#39;MatMul_5&#39;</span><span class="p">,</span> <span class="o">~</span><span class="n">_28</span><span class="p">:</span> <span class="n">TFlowMetaTensorShape</span><span class="p">([</span><span class="n">Dimension</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">Dimension</span><span class="p">(</span><span class="mi">10</span><span class="p">)],,</span> <span class="n">obj</span><span class="o">=</span><span class="n">TensorShape</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">])),</span> <span class="o">~</span><span class="n">_29</span><span class="p">:</span> <span class="s1">&#39;MatMul_5:0&#39;</span><span class="p">}</span>
+</pre></div>
+
+
+<p>Reification in this case is straightforward.</p>
+<div class="highlight"><pre><span></span>1  _ = reify(S_lv, s)
+
+~_5
+</pre></div>
+
+
+<p>In our running example we would walk the graph i.e. <code>ans</code> in our
+case. The output would be a new graph where <a href="#org4e73f52">4</a> has been
+replaced with <code>S_lv</code>. What can we use to implement walking through a
+graph?</p>
+<p>The concepts of unification and reification are encapsulated in the
+language <a href="http://minikanren.org/">miniKanren</a> as <code>eq</code> and <code>run</code> respectively. Luckily, miniKanren has a python
+implementation! </p>
+<div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="kn">from</span> <span class="nn">kanren</span> <span class="kn">import</span> <span class="n">eq</span><span class="p">,</span> <span class="n">run</span>
+<span class="mi">2</span>  <span class="n">x</span> <span class="o">=</span> <span class="n">var</span><span class="p">()</span>
+<span class="mi">3</span>  <span class="n">_</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">eq</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="mi">2</span><span class="p">,)</span>
+</pre></div>
+
+
+<p>In later posts I'll go into exactly how <code>Symbolic-PyMc</code> uses
+miniKanren while adding relations such as <code>graph_applyo</code> to walk and
+replace sections.</p>
+                </div><!-- /.entry-content -->
+        </article>
+</section>
+        </div><!--/span-->
+
+                <div class="span3 well sidebar-nav" id="sidebar">
+<ul class="nav nav-list">
+<li class="nav-header"><h4><i class="icon-external-link"></i>blogroll</h4></li>
+    <li><a href="https://twiecki.io/"><i class="icon-external-link"></i>Twiecki's</a></li>
+    <li><a href="https://docs.pymc.io/"><i class="icon-external-link"></i>PyMC3</a></li>
+<li class="nav-header"><h4><i class="icon-home icon-large"></i> social</h4></li>
+    <li><a href="https://github.com/josephwillard"><i class="icon-github-sign icon-large"></i>github</a></li>
+    <li><a href="https://www.linkedin.com/in/joseph-willard-5040a4117/"><i class="icon-linkedin-sign icon-large"></i>linkedin</a></li>
+
+<li class="nav-header"><h4><i class="icon-folder-close icon-large"></i>Categories</h4></li>
+<li>
+<a href="/category/gsoc.html">
+    <i class="icon-folder-open icon-large"></i>GSoC
+</a>
+</li>
+<li>
+<a href="/category/misc.html">
+    <i class="icon-folder-open icon-large"></i>misc
+</a>
+</li>
+
+<li class="nav-header"><h4><i class="icon-tags icon-large"></i>Tags</h4></li>
+
+
+</ul>        </div><!--/.well -->
+
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <address id="about">
+                Proudly powered by <a href="http://pelican.notmyidea.org/">Pelican <i class="icon-external-link"></i></a>,
+                                which takes great advantage of <a href="http://python.org">Python <i class="icon-external-link"></i></a>.
+        </address><!-- /#about -->
+
+        <p>The theme is from <a href="http://twitter.github.com/bootstrap/">Bootstrap from Twitter <i class="icon-external-link"></i></a>,
+                   and <a href="http://fortawesome.github.com/Font-Awesome/">Font-Awesome <i class="icon-external-link"></i></a>, thanks!</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+
+
+    <!-- Le javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/theme/js/jquery-1.7.2.min.js"></script>
+    <script src="/theme/js/bootstrap.min.js"></script>
+  </body>
+</html>
