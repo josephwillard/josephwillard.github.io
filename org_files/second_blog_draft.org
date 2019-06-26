@@ -1,4 +1,4 @@
-#+Title: Unifying Reifying and Symbolic-PyMC Continued
+#+Title: Unifying, Reifying and Symbolic-PyMC Continued
 #+Author: Joseph Willard
 #+Date: 2019-24-06
 
@@ -92,6 +92,7 @@ down in the list of operations until the original inputs are reached.
 From this point the next step is to write a function that can replace
 the below portion,
 
+
 #+NAME: input_block
 #+BEGIN_src python :eval never
 |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_2:0"
@@ -130,7 +131,7 @@ with the following:
 |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
 #+END_src
 
-How do we match graphs like [[input_block]] such that we obtain we obtain
+How do we match graphs like [[input_block][input_block]] such that we obtain we obtain
 the argument of the "Svd" operator (i.e ~S~, the [[output_block]])? 
 
 * Unification and Reification
@@ -158,7 +159,7 @@ few quick examples where ~x~ is a logic variable,
 
 Reification is the opposite operation to unification. This implies that it takes a
 variable and a substitution and returns a value that contains no
-variables. Below is a quick example,
+variables. Below is a quick example using Matt Rocklin's [[https://github.com/mrocklin/unification][unification]] library,
 
 #+BEGIN_SRC python -n :results value :wrap "src python :eval never"
   from unification import unify, reify, var
