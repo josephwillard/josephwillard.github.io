@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Unifying Reifying and Symbolic-PyMC Continued</title>
+    <title>Unifying, Reifying and Symbolic-PyMC Continued</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="Joseph Willard">
@@ -96,8 +96,8 @@
                         <h1>
                                 <a href=""
                                         rel="bookmark"
-                                        title="Permalink to Unifying Reifying and Symbolic-PyMC Continued">
-                                        Unifying Reifying and Symbolic-PyMC Continued
+                                        title="Permalink to Unifying, Reifying and Symbolic-PyMC Continued">
+                                        Unifying, Reifying and Symbolic-PyMC Continued
                                 </a>
                         </h1>
                 </header>
@@ -184,34 +184,33 @@ that took place. Each subsequent step right moves effectively one step
 down in the list of operations until the original inputs are reached.</p>
 <p>From this point the next step is to write a function that can replace
 the below portion,</p>
-<div class="highlight"><pre><span></span>|  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul_2:0&quot;
-|  |  |  Op(MatMul) &quot;MatMul_2&quot;
-|  |  |  |  Tensor(Svd):1,  shape=[10, 10]  &quot;Svd:1&quot;
-|  |  |  |  |  Op(Svd)  &quot;Svd&quot;
-|  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
-|  |  |  |  |  |  |  Op(MatMul) &quot;MatMul&quot;
-|  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
-|  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/b:0&quot;
-|  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  &quot;MatMul_1:0&quot;
-|  |  |  |  |  Op(MatMul)   &quot;MatMul_1&quot;
-|  |  |  |  |  |  Tensor(MatrixDiag):0, shape=[10, 10]  &quot;MatrixDiag:0&quot;
-|  |  |  |  |  |  |  Op(MatrixDiag) &quot;MatrixDiag&quot;
-|  |  |  |  |  |  |  |  Tensor(Svd):0,  shape=[10]  &quot;Svd:0&quot;
-|  |  |  |  |  |  |  |  |  Op(Svd)  &quot;Svd&quot;
-|  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
-|  |  |  |  |  |  |  |  |  |  |  Op(MatMul) &quot;MatMul&quot;
-|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
-|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/b:0&quot;
-|  |  |  |  |  |  Tensor(Svd):2,    shape=[10, 10]  &quot;Svd:2&quot;
-|  |  |  |  |  |  |  Op(Svd)    &quot;Svd&quot;
-|  |  |  |  |  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  &quot;MatMul:0&quot;
-|  |  |  |  |  |  |  |  |  Op(MatMul)   &quot;MatMul&quot;
-|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  &quot;MatMul/a:0&quot;
-|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  &quot;MatMul/b:0&quot;
-</pre></div>
-
-
+<p><a name="#org743740a">Input Block</a>
+    |  |  Tensor(MatMul):0, shape=[10, 10]  "MatMul_2:0"
+    |  |  |  Op(MatMul) "MatMul_2"
+    |  |  |  |  Tensor(Svd):1,  shape=[10, 10]  "Svd:1"
+    |  |  |  |  |  Op(Svd)  "Svd"
+    |  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  "MatMul:0"
+    |  |  |  |  |  |  |  Op(MatMul) "MatMul"
+    |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  "MatMul/a:0"
+    |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  "MatMul/b:0"
+    |  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  "MatMul_1:0"
+    |  |  |  |  |  Op(MatMul)   "MatMul_1"
+    |  |  |  |  |  |  Tensor(MatrixDiag):0, shape=[10, 10]  "MatrixDiag:0"
+    |  |  |  |  |  |  |  Op(MatrixDiag) "MatrixDiag"
+    |  |  |  |  |  |  |  |  Tensor(Svd):0,  shape=[10]  "Svd:0"
+    |  |  |  |  |  |  |  |  |  Op(Svd)  "Svd"
+    |  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  "MatMul:0"
+    |  |  |  |  |  |  |  |  |  |  |  Op(MatMul) "MatMul"
+    |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  "MatMul/a:0"
+    |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  "MatMul/b:0"
+    |  |  |  |  |  |  Tensor(Svd):2,    shape=[10, 10]  "Svd:2"
+    |  |  |  |  |  |  |  Op(Svd)    "Svd"
+    |  |  |  |  |  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  "MatMul:0"
+    |  |  |  |  |  |  |  |  |  Op(MatMul)   "MatMul"
+    |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  "MatMul/a:0"
+    |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  "MatMul/b:0"</p>
 <p>with the following:</p>
+<h3>Output Block</h3>
 <div class="highlight"><pre><span></span>|  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
 |  |  |  Op(MatMul) &quot;MatMul&quot;
 |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
@@ -219,8 +218,8 @@ the below portion,</p>
 </pre></div>
 
 
-<p>How do we match graphs like <a href="#org4e73f52">4</a> such that we obtain we obtain
-the argument of the "Svd" operator (i.e <code>S</code>, the <a href="#org7ea3d77">5</a>)? </p>
+<p>How do we match graphs like <a href="#input-block">Input Block</a> such that we obtain we obtain
+the argument of the "Svd" operator (i.e <code>S</code>, the <a href="#output-block">Output Block</a>)? </p>
 <h1>Unification and Reification</h1>
 <p>The idea behind unification is to make two terms equal by finding
 substitutions for logic variables that would satisfy equality. A logic
@@ -240,7 +239,7 @@ few quick examples where <code>x</code> is a logic variable,</p>
 
 <p>Reification is the opposite operation to unification. This implies that it takes a
 variable and a substitution and returns a value that contains no
-variables. Below is a quick example,</p>
+variables. Below is a quick example using Matt Rocklin's <a href="https://github.com/mrocklin/unification">unification</a> library,</p>
 <div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="kn">from</span> <span class="nn">unification</span> <span class="kn">import</span> <span class="n">unify</span><span class="p">,</span> <span class="n">reify</span><span class="p">,</span> <span class="n">var</span>
 <span class="mi">2</span>  <span class="n">_</span> <span class="o">=</span> <span class="p">[</span><span class="n">reify</span><span class="p">([</span><span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">],</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="s1">&#39;u&#39;</span><span class="p">}),</span>
 <span class="mi">3</span>       <span class="n">reify</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="mi">5</span><span class="p">})]</span>
@@ -252,7 +251,7 @@ variables. Below is a quick example,</p>
 <p>The concepts of "unification" and "reification" are important in term
 rewriting, and what we have been discussing up to this point is term
 rewriting!</p>
-<p>Now, we want to unify <a href="#org4e73f52">4</a> with another graph containing a
+<p>Now, we want to unify <a href="#input-block">Input Block</a> with another graph containing a
 logic variable as the input for an "Svd". We can then use this logic
 variable to reify.</p>
 <p>How do we do this with a TensorFlow graph? Using the unification
@@ -286,7 +285,7 @@ variable to reify.</p>
 
 
 <p>In our running example we would walk the graph i.e. <code>ans</code> in our
-case. The output would be a new graph where <a href="#org4e73f52">4</a> has been
+case. The output would be a new graph where <a href="#input-block">Input Block</a> has been
 replaced with <code>S_lv</code>. What can we use to implement walking through a
 graph?</p>
 <p>The concepts of unification and reification are encapsulated in the
