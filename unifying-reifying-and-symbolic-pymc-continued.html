@@ -183,32 +183,35 @@ can inspect the graph.</p>
 that took place. Each subsequent step right moves effectively one step
 down in the list of operations until the original inputs are reached.</p>
 <p>From this point the next step is to write a function that can replace
-the below portion,</p>
-<p><a name="#org743740a">Input Block</a>
-    |  |  Tensor(MatMul):0, shape=[10, 10]  "MatMul_2:0"
-    |  |  |  Op(MatMul) "MatMul_2"
-    |  |  |  |  Tensor(Svd):1,  shape=[10, 10]  "Svd:1"
-    |  |  |  |  |  Op(Svd)  "Svd"
-    |  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  "MatMul:0"
-    |  |  |  |  |  |  |  Op(MatMul) "MatMul"
-    |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  "MatMul/a:0"
-    |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  "MatMul/b:0"
-    |  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  "MatMul_1:0"
-    |  |  |  |  |  Op(MatMul)   "MatMul_1"
-    |  |  |  |  |  |  Tensor(MatrixDiag):0, shape=[10, 10]  "MatrixDiag:0"
-    |  |  |  |  |  |  |  Op(MatrixDiag) "MatrixDiag"
-    |  |  |  |  |  |  |  |  Tensor(Svd):0,  shape=[10]  "Svd:0"
-    |  |  |  |  |  |  |  |  |  Op(Svd)  "Svd"
-    |  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  "MatMul:0"
-    |  |  |  |  |  |  |  |  |  |  |  Op(MatMul) "MatMul"
-    |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  "MatMul/a:0"
-    |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  "MatMul/b:0"
-    |  |  |  |  |  |  Tensor(Svd):2,    shape=[10, 10]  "Svd:2"
-    |  |  |  |  |  |  |  Op(Svd)    "Svd"
-    |  |  |  |  |  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  "MatMul:0"
-    |  |  |  |  |  |  |  |  |  Op(MatMul)   "MatMul"
-    |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  "MatMul/a:0"
-    |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  "MatMul/b:0"</p>
+the below</p>
+<h3>Input Block</h3>
+<div class="highlight"><pre><span></span>|  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul_2:0&quot;
+|  |  |  Op(MatMul) &quot;MatMul_2&quot;
+|  |  |  |  Tensor(Svd):1,  shape=[10, 10]  &quot;Svd:1&quot;
+|  |  |  |  |  Op(Svd)  &quot;Svd&quot;
+|  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
+|  |  |  |  |  |  |  Op(MatMul) &quot;MatMul&quot;
+|  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
+|  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/b:0&quot;
+|  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  &quot;MatMul_1:0&quot;
+|  |  |  |  |  Op(MatMul)   &quot;MatMul_1&quot;
+|  |  |  |  |  |  Tensor(MatrixDiag):0, shape=[10, 10]  &quot;MatrixDiag:0&quot;
+|  |  |  |  |  |  |  Op(MatrixDiag) &quot;MatrixDiag&quot;
+|  |  |  |  |  |  |  |  Tensor(Svd):0,  shape=[10]  &quot;Svd:0&quot;
+|  |  |  |  |  |  |  |  |  Op(Svd)  &quot;Svd&quot;
+|  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
+|  |  |  |  |  |  |  |  |  |  |  Op(MatMul) &quot;MatMul&quot;
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/b:0&quot;
+|  |  |  |  |  |  Tensor(Svd):2,    shape=[10, 10]  &quot;Svd:2&quot;
+|  |  |  |  |  |  |  Op(Svd)    &quot;Svd&quot;
+|  |  |  |  |  |  |  |  Tensor(MatMul):0,   shape=[10, 10]  &quot;MatMul:0&quot;
+|  |  |  |  |  |  |  |  |  Op(MatMul)   &quot;MatMul&quot;
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  &quot;MatMul/a:0&quot;
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,  shape=[10, 10]  &quot;MatMul/b:0&quot;
+</pre></div>
+
+
 <p>with the following:</p>
 <h3>Output Block</h3>
 <div class="highlight"><pre><span></span>|  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
