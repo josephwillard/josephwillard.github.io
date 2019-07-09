@@ -1,0 +1,423 @@
+#+LaTeX_HEADER: \usepackage{amsmath, amsfonts, listings, amsthm, mathtools, graphicx, tkz-graph, tikz, outlines, fixmath, marginnote, pdfpages, mathrsfs, mathtools, inputenc, todonotes, placeins, bm}
+#+Title: Converting ~PyMC4~ to ~Symbolic-PyMC~
+#+AUTHOR: Joseph Willard
+#+LaTeX: \setcounter{secnumdepth}{0}
+#+LaTeX: \newpage
+#+STARTUP: hideblocks indent hidestars
+#+OPTIONS: ^:nil toc:nil d:(not "logbook" "todo" "note" "notes") tex:t |:t broken-links:mark
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+
+#+PROPERTY: header-args :session tf :exports both :eval never-export :results output drawer replace
+#+PROPERTY: header-args:text :eval never
+#+OPTIONS: toc:nil
+
+* Introduction :noexport
+All of my blog posts up to this point have addressed dealing with
+tensor flow objects that are transformed into ~Symbolic-PyMC~
+meta objects. The natural question now is how do we start with
+~PyMC4~ model and convert it into a ~Symbolic-PyMC~ object?
+
+
+* Closing Loose Ends
+Picking up from my last blog we are now in the position to
+use ~kanren~ and ~Symbolic-PyMC~ together to walk and replace sections
+in our SVD graph problem.
+
+#+BEGIN_SRC python -n :results raw pp :wrap "src python :eval never"
+  import tensorflow as tf
+
+  import numpy as np
+
+  from unification import var
+
+  from kanren import run, eq, lall
+
+  from symbolic_pymc.etuple import etuple, ExpressionTuple
+  from symbolic_pymc.relations.graph import graph_applyo
+  from symbolic_pymc.tensorflow.meta import mt
+  from symbolic_pymc.tensorflow.printing import tf_dprint
+
+
+  X = tf.convert_to_tensor(np.random.normal(0, 1, (10, 10)), name='X')
+  S = tf.matmul(X, X, transpose_a=True)
+  d, U, V = tf.linalg.svd(S)
+  S_2 = tf.matmul(U, tf.matmul(tf.linalg.diag(d), V, adjoint_b=True))
+  ans = S - S_2
+
+  def svd_reduceo(expanded_term, reduced_term):
+      S_lv = var()
+      d_mt, U_mt, V_mt = mt.linalg.svd(S_lv, name=var())
+
+      t1 = mt.matrixdiag(d_mt, name=var())
+      t2 = mt.matmul(t1, V_mt, transpose_a=False, transpose_b=True, name=var())
+      template_mt = mt.matmul(U_mt, t2, transpose_a=False, transpose_b=False, name=var())
+
+      # This is a workaround to reference issue #47.
+      d_mt.op.node_def.attr.clear()
+      t1.op.node_def.attr.clear()
+      t2.op.node_def.attr.clear()
+      template_mt.op.node_def.attr.clear()
+
+      return lall(eq(expanded_term, template_mt),
+                  eq(reduced_term, S_lv))
+
+
+  def simplify_graph(expanded_term):
+      expanded_term = mt(expanded_term)
+      reduced_term = var()
+
+      graph_goal = graph_applyo(svd_reduceo, expanded_term, reduced_term)
+      res = run(1, reduced_term, graph_goal)
+      res_tf = res[0].eval_obj.reify()
+      return res_tf
+
+  tf_dprint(ans)
+  tf_dprint(simplify_graph(ans))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+Tensor(Sub):0,	shape=[10, 10]	"sub:0"
+|  Op(Sub)	"sub"
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"X:0"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"X:0"
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_2:0"
+|  |  |  Op(MatMul)	"MatMul_2"
+|  |  |  |  Tensor(Svd):1,	shape=[10, 10]	"Svd:1"
+|  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  ...
+|  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_1:0"
+|  |  |  |  |  Op(MatMul)	"MatMul_1"
+|  |  |  |  |  |  Tensor(MatrixDiag):0,	shape=[10, 10]	"MatrixDiag:0"
+|  |  |  |  |  |  |  Op(MatrixDiag)	"MatrixDiag"
+|  |  |  |  |  |  |  |  Tensor(Svd):0,	shape=[10]	"Svd:0"
+|  |  |  |  |  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  |  |  |  |  ...
+|  |  |  |  |  |  Tensor(Svd):2,	shape=[10, 10]	"Svd:2"
+|  |  |  |  |  |  |  Op(Svd)	"Svd"
+|  |  |  |  |  |  |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  |  |  |  |  |  |  ...
+Tensor(Sub):0,	shape=[10, 10]	"sub_1:0"
+|  Op(Sub)	"sub_1"
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  Op(MatMul)	"MatMul"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"X:0"
+|  |  |  |  Tensor(Const):0,	shape=[10, 10]	"X:0"
+|  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul:0"
+|  |  |  ...
+#+END_src
+
+We have now seen a way to move from ~TensorFlow~ to ~Symbolic-PyMC~
+and traverse a graph. How does this relate to ~PyMC4~?
+
+* A look into new pymc4 models
+As of the date this blog has been posted ~PyMC4~ received a large
+update introducing generative models. In previous iterations of
+~PyMC4~ conversion would have involve trying to pinpoint what ~TensorFlow~
+object represented the observations. Luckily, with the recent changes
+this can be controlled by how the model is created relieving some of
+the searching on ~Symbolic-PyMCs~ part.
+
+Consider the following model,
+
+#+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
+  from symbolic_pymc.tensorflow.meta import mt
+
+  from tensorflow.python.framework.ops import disable_eager_execution
+  disable_eager_execution()
+
+  import numpy as np
+
+  import pymc4 as pm
+
+  from pymc4 import distributions as dist
+
+  @pm.model(keep_return=False)
+  def nested_model(intercept, x_coeff, x):
+      y = yield dist.Normal("y", mu=intercept + x_coeff.sample() * x, sigma=1.0)
+      return y
+
+
+  @pm.model
+  def main_model():
+      intercept = yield dist.Normal("intercept", mu=0, sigma=10)
+      x = np.linspace(-5, 5, 100)
+      x_coeff = dist.Normal("x_coeff", mu=0, sigma=5)
+      result = yield nested_model(intercept, x_coeff, x)
+      return result
+
+  ret, state = pm.evaluate_model(main_model())
+  _ = [ret, state]
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+[<tf.Tensor 'y_3_1/sample/Reshape:0' shape=(100,) dtype=float32>,
+ SamplingState(
+    values: ['main_model/intercept', 'main_model/nested_model/y', 'main_model']
+    distributions: ['Normal:main_model/intercept', 'Normal:main_model/nested_model/y']
+    num_potentials=0
+)]
+#+END_src
+
+
+Since the output of models in ~PyMC4~ are ~TensorFlow~ objects, which
+~Symbolic-PyMC~ is already setup to deal with. This means one can convert
+~PyMC4~ models to ~Symbolic-PyMC~ meta objects trivially by
+
+#+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
+  ret_mt = mt(ret)
+  _ = ret_mt
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+TFlowMetaTensor(tf.float32, TFlowMetaOp(TFlowMetaOpDef(obj=name: "Reshape"
+i...f.Operation 'y_3_1/sample/Reshape' type=Reshape>), 0, TFlowMetaTensorShape(100,),, obj=TensorShape([100])), 'y_3_1/sample/Reshape:0', obj=<tf.Tensor 'y_3_1/sample/Reshape:0' shape=(100,) dtype=float32>)
+#+END_src
+
+To move in reverse we only have to call reify on the new object
+
+#+BEGIN_SRC python -n :results value pp :wrap "src python :eval never"
+  _ = ret_mt.reify()
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+<tf.Tensor 'y_3_1/sample/Reshape:0' shape=(100,) dtype=float32>
+#+END_src
+
+* Moving forward
+From this point there are a few topics that need to be tackled. The
+first is how do we implement the conversion of ~PyMC4~ models into
+~Symbolic-PyMC~ models behind the scenes? One way would be to expand
+on the dispatcher that already runs on ~TensorFlow~ objects to now
+consider ~PyMC4~ models. Other questions that have come up while
+digging into this is whether there exists a way to reconstruct a graph
+when eager mode is enabled.
+
+* TODO Latest Work :noexport
+
+
+#+BEGIN_SRC python -n :exports both :results output
+  from symbolic_pymc.tensorflow.meta import mt
+  from symbolic_pymc.tensorflow.printing import tf_dprint
+  from symbolic_pymc.unify import (ExpressionTuple, etuple)
+
+
+  from tensorflow.python.framework.ops import enable_eager_execution
+  from tensorflow.python.eager import def_function
+  #enable_eager_execution()
+
+  import numpy as np
+
+  import pymc4 as pm
+
+  from pymc4 import distributions as dist
+
+
+
+  @pm.model(keep_return=False)
+  def nested_model(intercept, x_coeff, x):
+      y = yield dist.Normal("y", mu=intercept + x_coeff.sample() * x, sigma=1.0)
+      return y
+
+
+  @pm.model
+  def main_model():
+      intercept = yield dist.Normal("intercept", mu=0, sigma=10)
+      x = np.linspace(-5, 5, 100)
+      x_coeff = dist.Normal("x_coeff", mu=0, sigma=5)
+      result = yield nested_model(intercept, x_coeff, x)
+      return result
+
+  def eager_fix():
+      ret, state = pm.evaluate_model(main_model())
+      return ret
+
+  t = eager_fix()
+  #new_graph = mt(ret)
+#+END_SRC
+
+#+BEGIN_SRC python -n :exports both :results output
+  from symbolic_pymc.tensorflow.meta import mt
+  from symbolic_pymc.tensorflow.printing import tf_dprint
+
+  import numpy as np
+  import tensorflow as tf
+  import pymc4 as pm
+  from pymc4 import distributions as dist
+
+  @pm.model(keep_return=False)
+  def nested_model(intercept, x_coeff, x):
+      y = yield dist.Normal("y", mu=intercept + x_coeff.sample() * x, sigma=1.0)
+      return y
+
+  @pm.model
+  def main_model():
+      intercept = yield dist.Normal("intercept", mu=0, sigma=10)
+      x = np.linspace(-5, 5, 100)
+      x_coeff = dist.Normal("x_coeff", mu=0, sigma=5)
+      result = yield nested_model(intercept, x_coeff, x)
+      return result
+
+
+  ret, state = pm.evaluate_model(main_model())
+  new_graph = mt(ret)
+#+END_SRC
+
+
+#+BEGIN_SRC python -n :exports both :results output
+  import pymc4 as pm
+  from pymc4 import distributions as dist
+  @pm.model(keep_return=False)  # do not keep `norm` in return
+  def nested_model(cond):
+      norm = yield dist.Normal("n", cond, 1)
+      return norm
+  @pm.model  # keep_return is True by default
+  def main_model():
+      norm = yield dist.Normal("n", 0, 1)
+      result = yield nested_model(norm, name="a")
+      return result
+  ret, state = pm.evaluate_model(main_model())
+#+END_SRC
+
+
+
+
+* Work :noexport
+
+#+BEGIN_SRC python -n :exports both :results output
+  from symbolic_pymc.tensorflow.meta import mt
+  from symbolic_pymc.tensorflow.printing import tf_dprint
+
+  import numpy as np
+  import tensorflow as tf
+  import pymc4 as pm
+
+  @pm.model()
+  def linreg(n_points=100):
+      # These could be priors
+      intercept = pm.Normal(mu=0, sigma=10)
+      x_coeff = pm.Normal(mu=0, sigma=5)
+      x = np.linspace(-5, 5, n_points)
+
+      # This could be an observed term (i.e. specify a likelihood)
+      y = pm.Normal(mu=intercept + x_coeff * x, sigma=1.0)
+
+
+  model = linreg.configure()
+
+  # All the RVs are here, but each produces a graph of its own; which one do we
+  # want/use/care about?
+  model._forward_context.vars
+
+  tf_dprint(model._forward_context.vars[-1].sample())
+
+  # We can specify which one is the "observed" variable
+  y_val = tf.convert_to_tensor(np.linspace(-5.0, 5.0, 100), dtype='float32')  # tf.compat.v1.placeholder('float32', name='y')
+
+  # We specify that here and get a new model object
+  model = model.observe(y=y_val)
+
+  # This gives use graphs we know we're interested in (instead of all of them):
+  y_obs = model._observations['y']
+
+  # XXX: This isn't the graph for `y`!
+  tf_dprint(y_obs)
+
+
+  # Here's one way to fish-out the sample-space graphs for observed variables:
+  def model_to_meta_graphs(model):
+      model_names_to_vars = {v.name: v for v in model._forward_context.vars}
+      observation_graphs = [mt(v.sample()) for vn, v in model_names_to_vars.items()
+			    if vn in model._observations]
+      # TODO: We want the observation/observed relationship to show up in the TF
+      # graph!  For example, we might want an TF "Observe" Op[Def].
+      return observation_graphs
+
+
+  model_to_meta_graphs(model)
+
+  # Now, we have a way to go from PyMC4 graphs to meta graphs
+
+  #
+  #  Get a log-space version of the graph; specifically, the total log-probability/likelihood.
+  #  Note: this doesn't require one to define "observed" variables and/or a "likelihood".
+  #
+  model_logp_fn = model.make_log_prob_function()
+
+  x_coeff_val = tf.convert_to_tensor(1.0, dtype='float32')  # tf.compat.v1.placeholder('float32', name='x_coeff')
+  intercept_val = tf.convert_to_tensor(1.0, dtype='float32')  # tf.compat.v1.placeholder('float32', name='intercept')
+  y_val = tf.convert_to_tensor(np.linspace(-5.0, 5.0, 100), dtype='float32')  # tf.compat.v1.placeholder('float32', name='y')
+
+  model_logp = model_logp_fn(x_coeff=x_coeff_val,
+			     y=y_val,
+			     intercept=intercept_val)
+
+  model_logp
+  model_logp
+#+END_SRC
+
+Talk about creating model_graph (from theano)
+
+#+BEGIN_SRC python -n :exports both :results output
+  import tensorflow as tf
+
+  import numpy as np
+
+  from unification import var
+
+  from kanren import run, eq, lall
+
+  from symbolic_pymc.etuple import etuple, ExpressionTuple
+  from symbolic_pymc.relations.graph import graph_applyo
+  from symbolic_pymc.tensorflow.meta import mt
+  from symbolic_pymc.tensorflow.printing import tf_dprint
+
+
+  X = tf.convert_to_tensor(np.random.normal(0, 1, (10, 10)), name='X')
+  S = tf.matmul(X, X, transpose_a=True)
+  d, U, V = tf.linalg.svd(S)
+  S_2 = tf.matmul(U, tf.matmul(tf.linalg.diag(d), V, adjoint_b=True))
+  ans = S - S_2
+
+  def svd_reduceo(expanded_term, reduced_term):
+      S_lv = var()
+      d_mt, U_mt, V_mt = mt.linalg.svd(S_lv, name=var())
+
+      t1 = mt.matrixdiag(d_mt, name=var())
+      t2 = mt.matmul(t1, V_mt, transpose_a=False, transpose_b=True, name=var())
+      template_mt = mt.matmul(U_mt, t2, transpose_a=False, transpose_b=False, name=var())
+
+      # This is a workaround to reference issue #47.
+      d_mt.op.node_def.attr.clear()
+      t1.op.node_def.attr.clear()
+      t2.op.node_def.attr.clear()
+      template_mt.op.node_def.attr.clear()
+
+      return lall(eq(expanded_term, template_mt),
+                  eq(reduced_term, S_lv))
+
+
+  def simplify_graph(expanded_term):
+      expanded_term = mt(expanded_term)
+      reduced_term = var()
+
+      graph_goal = graph_applyo(svd_reduceo, expanded_term, reduced_term)
+      res = run(1, reduced_term, graph_goal)
+      res_tf = res[0].eval_obj.reify()
+      return res_tf
+
+
+  tf_dprint(ans)
+  tf_dprint(simplify_graph(ans))
+
+#+END_SRC
+
+

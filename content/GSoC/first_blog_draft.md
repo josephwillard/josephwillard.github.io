@@ -1,4 +1,4 @@
-Title: Unifying Reifying and Symbolic-PyMC
+Title: Unifying, Reifying and Symbolic-PyMC
 Author: Joseph Willard
 Date: 2019-6-10
 

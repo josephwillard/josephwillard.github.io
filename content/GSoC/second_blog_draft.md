@@ -1,3 +1,6 @@
+Title: Unifying, Reifying and Symbolic-PyMC Continued
+Author: Joseph Willard
+Date: 2019-06-24
 
 
 # Graph Reconstruction Through TensorFlow Part 2
@@ -70,7 +73,7 @@ down in the list of operations until the original inputs are reached.
 From this point the next step is to write a function that can replace
 the below portion,
 
-<a name="#org743740a">Input Block</a>
+### Input Block
     |  |  Tensor(MatMul):0,	shape=[10, 10]	"MatMul_2:0"
     |  |  |  Op(MatMul)	"MatMul_2"
     |  |  |  |  Tensor(Svd):1,	shape=[10, 10]	"Svd:1"
