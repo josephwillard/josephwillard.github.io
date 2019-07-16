@@ -1,0 +1,79 @@
+% Created 2019-06-23 Sun 01:01
+% Intended LaTeX compiler: pdflatex
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\author{Joseph Willard}
+\date{2019-24-06}
+\title{Unifying Reifying and Symbolic-PyMC Continued}
+\hypersetup{
+ pdfauthor={Joseph Willard},
+ pdftitle={Unifying Reifying and Symbolic-PyMC Continued},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 25.1.1 (Org mode 9.1.14)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:orgd0215c4}
+In the last blog post I focused on looking through TensorFlow objects
+and what could be used to recreate the graph of
+operations. Considering the analogy given in the first blog I should
+have enough information now to recreate the \texttt{str\_optimize} function
+for TensorFlow. To do this I need the following,
+
+\begin{enumerate}
+\item A function that takes the Tensorflow operation and creates the graph
+\end{enumerate}
+
+\begin{enumerate}
+\item Functions that search the graph and look for replacements
+\end{enumerate}
+
+
+Below is our original problem from the first blog,
+\begin{verbatim}
+ 1  """ Seeing if tensorflow has the same issue
+ 2  """
+ 3  import numpy as np
+ 4  import tensorflow as tf
+ 5  from tensorflow.python.framework.ops import disable_eager_execution
+ 6  
+ 7  
+ 8  tf.compat.v1.InteractiveSession()
+ 9  disable_eager_execution()
+10  
+11  X = np.random.normal(0, 1, (10, 10))
+12  
+13  S = tf.matmul(X, X, transpose_a=True)
+14  
+15  d, U, V = tf.linalg.svd(S)
+16  
+17  D = tf.matmul(U, tf.matmul(tf.linalg.diag(d), V, adjoint_b=True))
+18  ans = S - D
+\end{verbatim}
+
+<tensorflow.python.client.session.InteractiveSession object at 0x7f9b556ce6a0>
+
+
+
+\section{Graph Reconstruction through TensorFlow part 2}
+\label{sec:org0fdd3e9}
+Last blog I only described some of the objects of interest. Now, using
+\texttt{symbolic-pymc} in particular the \texttt{tf\_dprint} function we can inspect
+the graph.
+\end{document}

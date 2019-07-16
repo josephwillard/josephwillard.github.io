@@ -93,18 +93,17 @@ in our SVD graph problem.
     |  |  |  ...
 
 We have now seen a way to move from `TensorFlow` to `Symbolic-PyMC`
-and traverse a graph. Note that `simplify_graph` is equivalent to
-`str_optimize` from the analogy. How does this relate to `PyMC4`?
+and traverse a graph. How does this relate to `PyMC4`?
 
 
 # A look into new pymc4 models
 
 As of the date this blog has been posted `PyMC4` received a large
 update introducing generative models. In previous iterations of
-`PyMC4` conversion would have involved trying to pinpoint what
-`TensorFlow` object represented the observations. Luckily, with the
-recent changes this can be controlled by the user creating the model
-relieving the need for searching on `Symbolic-PyMCs` part.
+`PyMC4` conversion would have involve trying to pinpoint what `TensorFlow`
+object represented the observations. Luckily, with the recent changes
+this can be controlled by how the model is created relieving some of
+the searching on `Symbolic-PyMCs` part.
 
 Consider the following model,
 

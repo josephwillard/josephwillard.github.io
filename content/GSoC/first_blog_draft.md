@@ -7,9 +7,8 @@ Date: 2019-6-10
 Digging through TensorFlow I started by computing basic examples and
 comparing them to numpy's output. While doing this I came across the
 common theme of numerical approximation that theoretically should not
-have been present. Of course this brought me to pondering what would I
-have to do to get around these numerical errors that arise in software
-today?
+have been present. This brought me to pondering what would I have to
+do to get around these numerical errors that arise in software today?
 
 In this article consider the situation were one passingly uses an SVD.
 
@@ -463,10 +462,10 @@ One that immediately strikes some interest is `ans.op`.
 
     <tf.Operation 'sub' type=Sub>
 
-A `tf.Operation` is a node in the graph corresponds to a
+A `tf.Operation` is a node in a graph that corresponds to a
 computation. Some of the properties included in `tf.Operation` are
 `inputs` and `outputs`. These could be the arguments to the operation
-and the outputs, which corresponds to "S" and "matmul(&#x2026;)" for inputs
+and the outputs, which corresponds to "S", "matmul(&#x2026;)" for inputs
 and "ans" for outputs in `input_src_code`.
 
 Using our analogy, the above TensorFlow operation is the subtraction
@@ -489,7 +488,7 @@ Great! So as a quick recap I now have a way to take the result `ans`
 and walk backwards to our original matrices. Is it possible to
 determine what kind of operations are transpiring? Specifically, is it
 possible to determine if there was an SVD operation? The quick answer
-is "yes"! All I need to do is use the same methods I've used thus
+is "Yes"! All I need to do is use the same methods I've used thus
 far.
 
     1  _ = ans.op.inputs._inputs[1].op.inputs._inputs[0].op
@@ -500,13 +499,13 @@ This is like the "svd(&#x2026;)" in our analogy, so the argument to this
 "string operator" is `op.inputs`.
 
 At this point it's clear there exists a way to move through operations
-and get the corresponding inputs and outputs. How do we do this using TensorFlow? We
-know we would need a way to traverse a TensorFlow graph and find patterns like we
-did above, which is analogous to searching strings with `re.search` and
-replacing with `str.replace`.
+and get the corresponding inputs and outputs. It is also possible to
+determine what the nature of these operations were. How do we do this using
+TensorFlow? We know we would need a way to traverse a TensorFlow graph
+and find patterns like we did above, which is analogous to searching
+strings with `re.search` and replacing with `str.replace`.
 
 In later blog posts I'll dive into creating functions that parse this
 graph and make the required replacements much like our string
 analogy. This is one of the main goals of the `symbolic-pymc` package
 I'll be working with during GSoC 2019.
-

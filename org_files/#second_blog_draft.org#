@@ -275,7 +275,7 @@ replace sections.
 # Called graph_applyo(relation, input_graph, output_graph)
 
 
-** Work                                                           :noexport:
+** CANCELLED Work                                                 :noexport:
 
 #+BEGIN_SRC python -n :results raw pp :wrap "src python :eval never"
   from unification import unify, reify, var

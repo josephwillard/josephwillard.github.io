@@ -1,4 +1,4 @@
-Title: Unifying, Reifying and Symbolic-PyMC Continued
+Title: Unifying Reifying and Symbolic-PyMC Continued
 Author: Joseph Willard
 Date: 2019-06-24
 
@@ -7,10 +7,9 @@ Date: 2019-06-24
 
 In the last blog post I focused on looking through TensorFlow objects
 and what could be used within these to recreate the graph of
-operations. Considering the analogy given in the first blog I have the
-basic information to recreate the `str_optimize` function for
-TensorFlow. However, there is still something to say regarding how
-manipulating the graphs will work.
+operations. Considering the analogy given in the first blog I should
+have enough information now to recreate the `str_optimize` function
+for TensorFlow.
 
      1  """ Seeing if tensorflow has the same issue
      2  """
@@ -67,7 +66,7 @@ can inspect the graph.
     |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/a:0"
     |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul_3/b:0"
 
-The output of the top layer (furthest left) represents the subtraction
+The output the top layer (furthest left) represents the subtraction
 that took place. Each subsequent step right moves effectively one step
 down in the list of operations until the original inputs are reached.
 
@@ -106,8 +105,8 @@ with the following:
     |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/a:0"
     |  |  |  |  Tensor(Const):0,	shape=[10, 10]	"MatMul/b:0"
 
-How do we match graphs like [input\_block](#orgc240f08) such that we obtain we obtain
-the argument of the "Svd" operator (i.e `S`, the [5](#orgc073eec))? 
+How do we match graphs like [4](#org4e73f52) such that we obtain we obtain
+the argument of the "Svd" operator (i.e `S`, the [5](#org7ea3d77))? 
 
 
 # Unification and Reification
@@ -129,7 +128,7 @@ few quick examples where `x` is a logic variable,
 
 Reification is the opposite operation to unification. This implies that it takes a
 variable and a substitution and returns a value that contains no
-variables. Below is a quick example using Matt Rocklin's [unification](https://github.com/mrocklin/unification) library,
+variables. Below is a quick example,
 
     1  from unification import unify, reify, var
     2  _ = [reify(["m", x, "s", "i", "c"], {x:'u'}),
@@ -141,7 +140,7 @@ The concepts of "unification" and "reification" are important in term
 rewriting, and what we have been discussing up to this point is term
 rewriting!
 
-Now, we want to unify [4](#orgc240f08) with another graph containing a
+Now, we want to unify [4](#org4e73f52) with another graph containing a
 logic variable as the input for an "Svd". We can then use this logic
 variable to reify.
 
@@ -174,7 +173,7 @@ Reification in this case is straightforward.
     ~_5
 
 In our running example we would walk the graph i.e. `ans` in our
-case. The output would be a new graph where [4](#orgc240f08) has been
+case. The output would be a new graph where [4](#org4e73f52) has been
 replaced with `S_lv`. What can we use to implement walking through a
 graph?
 
@@ -191,3 +190,4 @@ implementation!
 In later posts I'll go into exactly how `Symbolic-PyMc` uses
 miniKanren while adding relations such as `graph_applyo` to walk and
 replace sections.
+
