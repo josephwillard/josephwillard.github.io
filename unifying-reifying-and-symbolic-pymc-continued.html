@@ -118,9 +118,10 @@
                 <h1>Graph Reconstruction Through TensorFlow Part 2</h1>
 <p>In the last blog post I focused on looking through TensorFlow objects
 and what could be used within these to recreate the graph of
-operations. Considering the analogy given in the first blog I should
-have enough information now to recreate the <code>str_optimize</code> function
-for TensorFlow.</p>
+operations. Considering the analogy given in the first blog I have the
+basic information to recreate the <code>str_optimize</code> function for
+TensorFlow. However, there is still something to say regarding how
+manipulating the graphs will work.</p>
 <div class="highlight"><pre><span></span> <span class="mi">1</span>  <span class="s2">&quot;&quot;&quot; Seeing if tensorflow has the same issue</span>
 <span class="s2"> 2  &quot;&quot;&quot;</span>
  <span class="mi">3</span>  <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
@@ -179,12 +180,11 @@ can inspect the graph.</p>
 </pre></div>
 
 
-<p>The output the top layer (furthest left) represents the subtraction
+<p>The output of the top layer (furthest left) represents the subtraction
 that took place. Each subsequent step right moves effectively one step
 down in the list of operations until the original inputs are reached.</p>
 <p>From this point the next step is to write a function that can replace
 the below portion,</p>
-<h3>Input Block</h3>
 <div class="highlight"><pre><span></span>|  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul_2:0&quot;
 |  |  |  Op(MatMul) &quot;MatMul_2&quot;
 |  |  |  |  Tensor(Svd):1,  shape=[10, 10]  &quot;Svd:1&quot;
@@ -213,7 +213,6 @@ the below portion,</p>
 
 
 <p>with the following:</p>
-<h3>Output Block</h3>
 <div class="highlight"><pre><span></span>|  |  Tensor(MatMul):0, shape=[10, 10]  &quot;MatMul:0&quot;
 |  |  |  Op(MatMul) &quot;MatMul&quot;
 |  |  |  |  Tensor(Const):0,    shape=[10, 10]  &quot;MatMul/a:0&quot;
@@ -221,8 +220,8 @@ the below portion,</p>
 </pre></div>
 
 
-<p>How do we match graphs like <a href="#input-block">Input Block</a> such that we obtain we obtain
-the argument of the "Svd" operator (i.e <code>S</code>, the <a href="#output-block">Output Block</a>)? </p>
+<p>How do we match graphs like <a href="#orgc240f08">input_block</a> such that we obtain we obtain
+the argument of the "Svd" operator (i.e <code>S</code>, the <a href="#orgc073eec">5</a>)? </p>
 <h1>Unification and Reification</h1>
 <p>The idea behind unification is to make two terms equal by finding
 substitutions for logic variables that would satisfy equality. A logic
@@ -254,7 +253,7 @@ variables. Below is a quick example using Matt Rocklin's <a href="https://github
 <p>The concepts of "unification" and "reification" are important in term
 rewriting, and what we have been discussing up to this point is term
 rewriting!</p>
-<p>Now, we want to unify <a href="#input-block">Input Block</a> with another graph containing a
+<p>Now, we want to unify <a href="#orgc240f08">4</a> with another graph containing a
 logic variable as the input for an "Svd". We can then use this logic
 variable to reify.</p>
 <p>How do we do this with a TensorFlow graph? Using the unification
@@ -288,7 +287,7 @@ variable to reify.</p>
 
 
 <p>In our running example we would walk the graph i.e. <code>ans</code> in our
-case. The output would be a new graph where <a href="#input-block">Input Block</a> has been
+case. The output would be a new graph where <a href="#orgc240f08">4</a> has been
 replaced with <code>S_lv</code>. What can we use to implement walking through a
 graph?</p>
 <p>The concepts of unification and reification are encapsulated in the

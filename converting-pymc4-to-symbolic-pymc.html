@@ -205,14 +205,15 @@ in our SVD graph problem.</p>
 
 
 <p>We have now seen a way to move from <code>TensorFlow</code> to <code>Symbolic-PyMC</code>
-and traverse a graph. How does this relate to <code>PyMC4</code>?</p>
+and traverse a graph. Note that <code>simplify_graph</code> is equivalent to
+<code>str_optimize</code> from the analogy. How does this relate to <code>PyMC4</code>?</p>
 <h1>A look into new pymc4 models</h1>
 <p>As of the date this blog has been posted <code>PyMC4</code> received a large
 update introducing generative models. In previous iterations of
-<code>PyMC4</code> conversion would have involve trying to pinpoint what <code>TensorFlow</code>
-object represented the observations. Luckily, with the recent changes
-this can be controlled by how the model is created relieving some of
-the searching on <code>Symbolic-PyMCs</code> part.</p>
+<code>PyMC4</code> conversion would have involved trying to pinpoint what
+<code>TensorFlow</code> object represented the observations. Luckily, with the
+recent changes this can be controlled by the user creating the model
+relieving the need for searching on <code>Symbolic-PyMCs</code> part.</p>
 <p>Consider the following model,</p>
 <div class="highlight"><pre><span></span> <span class="mi">1</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.tensorflow.meta</span> <span class="kn">import</span> <span class="n">mt</span>
  <span class="mi">2</span>  
