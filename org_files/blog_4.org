@@ -145,59 +145,6 @@
   #     radon_like = yield dist.Normal('radon_like', mu=radon_est, sd=eps,
   #                                    observed=data.log_radon)
   #     return radon_like
-    
-
-  # with pm.Model() as model_centered:
-  #     mu_a = pm.Normal('mu_a', mu=0., sd=100**2)
-  #     sigma_a = pm.HalfCauchy('sigma_a', 5)
-  #     mu_b = pm.Normal('mu_b', mu=0., sd=100**2)
-  #     sigma_b = pm.HalfCauchy('sigma_b', 5)
-  #     a = pm.Normal('a', mu=mu_a, sd=sigma_a, shape=n_counties)
-  #     b = pm.Normal('b', mu=mu_b, sd=sigma_b, shape=n_counties)
-  #     eps = pm.HalfCauchy('eps', 5)
-  #     radon_est = a[county_idx] + b[county_idx] * data.floor.values
-  #     radon_like = pm.Normal('radon_like', mu=radon_est, sd=eps,
-  #                            observed=data.log_radon)
-
-  # # Convert the PyMC3 graph into a symbolic-pymc graph
-  # fgraph = model_graph(model_centered)
-  # # Perform a set of standard algebraic simplifications
-  # fgraph = canonicalize(fgraph, in_place=False)
-
-
-  # def reparam_graph(graph):
-  #     """Apply re-parameterization relations throughout a graph."""
-
-  #     graph_mt = mt(graph)
-
-  #     expr_graph = run(0, var('q'),
-  #                      # Apply our transforms to unobserved RVs only
-  #                      non_obs_graph_applyo(
-  #                          lambda x, y: tt_graph_applyo(scale_loc_transform, x, y),
-  #                          graph_mt, var('q')))
-
-  #     expr_graph = expr_graph[0]
-  #     opt_graph_tt = expr_graph.reify()
-
-  #     # PyMC3 needs names for each RV
-  #     opt_graph_tt.owner.inputs[1].name = 'Y_new'
-
-  #     return opt_graph_tt
-
-
-  # fgraph_reparam = reparam_graph(fgraph.outputs[0])
-
-  # # Convert the symbolic-pymc graph into a PyMC3 graph so that we can sample it
-  # model_recentered = graph_model(fgraph_reparam)
-
-  # np.random.seed(123)
-
-  # with model_centered:
-  #     centered_trace = pm.sample(draws=5000, tune=1000, cores=4)[1000:]
-
-  # with model_recentered:
-  #     recentered_trace = pm.sample(draws=5000, tune=1000, cores=4)[1000:]
-
 #+END_SRC
 
 
