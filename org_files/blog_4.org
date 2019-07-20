@@ -17,10 +17,61 @@
 *** Convert to pymc4 using tensorflow
 **** Look at https://colab.research.google.com/github/tensorflow/probability/blob/master/tensorflow_probability/examples/jupyter_notebooks/HLM_TFP_R_Stan.ipynb#scrollTo=QkchUh3V382r 
 ***** Section 6
+
+* Porting theano ideas :noexport:
+#+NAME:
+#+BEGIN_SRC python -n :exports both :results output
+  def optimize_graph(x, optimization, return_graph=None, in_place=False):
+      """Easily optimize Theano graphs.
+
+      Apply an optimization to either the graph formed by a Theano variable or an
+      existing graph and return the resulting optimized graph.
+
+      When given an existing `FunctionGraph`, the optimization is
+      performed without side-effects (i.e. won't change the given graph).
+
+      """
+      if not isinstance(x, tt_FunctionGraph):
+          inputs = tt_inputs([x])
+          outputs = [x]
+          model_memo = clone_get_equiv(inputs, outputs, copy_orphans=False)
+          cloned_inputs = [model_memo[i] for i in inputs if not isinstance(i, tt.Constant)]
+          cloned_outputs = [model_memo[i] for i in outputs]
+
+          x_graph = FunctionGraph(cloned_inputs, cloned_outputs, clone=False)
+          x_graph.memo = model_memo
+
+          if return_graph is None:
+              return_graph = False
+      else:
+          x_graph = x
+
+          if return_graph is None:
+              return_graph = True
+
+      x_graph_opt = x_graph if in_place else x_graph.clone()
+      _ = optimization.optimize(x_graph_opt)
+
+      if return_graph:
+          res = x_graph_opt
+      else:
+          res = x_graph_opt.outputs
+          if len(res) == 1:
+              res, = res
+      return res
+
+
+  def canonicalize(x, **kwargs):
+      """Canonicalize a Theano variable and/or graph."""
+      return optimize_graph(x, canonicalize_opt, **kwargs)
+
+#+END_SRC
+
+#+CAPTION:
+
 * work :noexport:
 
 #+BEGIN_SRC python -n :exports both :results output
-
   import numpy as np
   import pandas as pd
 
@@ -41,10 +92,10 @@
   from symbolic_pymc.relations.tensorflow import *
 
   import tensorflow_probability as tfp
-  # from symbolic_pymc.relations.theano.distributions import scale_loc_transform
 
+  from tensorflow.python.framework.ops import disable_eager_execution
 
-  # tt.config.compute_test_value = 'ignore'
+  disable_eager_execution()
 
   data = pd.read_csv('https://github.com/pymc-devs/pymc3/raw/master/pymc3/examples/data/radon.csv')
   county_names = data.county.unique()
@@ -53,23 +104,12 @@
   n_counties = len(data.county.unique())
 
 
-  class HalfCauchy(BackendDistribution, abstract.Normal):
-      __doc__ = r"""{}
-      Developer Notes
-      ---------------
-      Parameter mappings to TensorFlow Probability are as follows:
-      - mu: loc
-      - sigma: scale
-      """.format(
-          "HalfCauchy"
-      )
-
-      def _init_backend(self):
-          mu, sigma = self.conditions["mu"], self.conditions["sigma"]
-          self._backend_distribution = tfp.distributions.half_cauchy(loc=mu, scale=sigma)
-
-
-
+  @pm.model(keep_return=False)
+  def nested_model(a, b, eps, log_data):
+      y = yield dist.Normal('radon_like', mu=a + b.sample() * data.floor.values,
+                            sigma=eps,
+                            observed=log_data)
+      return y
 
   @pm.model
   def model_centered():
@@ -78,73 +118,12 @@
       mu_b = yield dist.Normal('mu_b', mu=0., sigma=100**2)
       sigma_b = yield dist.HalfNormal('sigma_b', mu=0., sigma=100**2)
       a = yield dist.Normal('a', mu=mu_a, sigma=sigma_a, shape=n_counties)
-      b = yield dist.Normal('b', mu=mu_b, sigma=sigma_b, shape=n_counties)
-      eps = yield dist.HalfNormal('eps', mu=0., sigma=100**2)
-      radon_est = a[county_idx] + b[county_idx] * data.floor.values
-      radon_like = yield dist.Normal('radon_like', mu=radon_est, sigma=eps,
-                                     observed=data.log_radon)
+      b = dist.Normal('b', mu=mu_b, sigma=sigma_b, shape=n_counties)
+      eps = yield dist.HalfNormal('eps', mu=0., sigma=100**2)    
+      radon_like = yield nested_model(a, b, eps, data.log_radon)
       return radon_like
-    
 
-
-  # Convert the PyMC3 graph into a symbolic-pymc graph
-  #fgraph = model_graph(model_centered)
-  # Perform a set of standard algebraic simplifications
-  fgraph = canonicalize(fgraph, in_place=False)
-
-
-  def reparam_graph(graph):
-      """Apply re-parameterization relations throughout a graph."""
-
-      graph_mt = mt(graph)
-
-      expr_graph = run(0, var('q'),
-                       # Apply our transforms to unobserved RVs only
-                       non_obs_graph_applyo(
-                           lambda x, y: tt_graph_applyo(scale_loc_transform, x, y),
-                           graph_mt, var('q')))
-
-      expr_graph = expr_graph[0]
-      opt_graph_tt = expr_graph.reify()
-
-      # PyMC3 needs names for each RV
-      opt_graph_tt.owner.inputs[1].name = 'Y_new'
-
-      return opt_graph_tt
-
-
-  fgraph_reparam = reparam_graph(fgraph.outputs[0])
-
-  # Convert the symbolic-pymc graph into a PyMC3 graph so that we can sample it
-  model_recentered = graph_model(fgraph_reparam)
-
-  np.random.seed(123)
-
-  with model_centered:
-      centered_trace = pm.sample(draws=5000, tune=1000, cores=4)[1000:]
-
-  with model_recentered:
-      recentered_trace = pm.sample(draws=5000, tune=1000, cores=4)[1000:]
-
-  # @pm.model
-  # def model_centered():
-  #     mu_a = yield dist.Normal('mu_a', mu=0., sigma=100**2)
-  #     sigma_a = yield tfp.distributions.half_cauchy\
-  #                                      .HalfCauchy(loc=0, scale=100**2)\
-  #                                      .log_prob(5)
-  #     mu_b = yield dist.Normal('mu_b', mu=0., sigma=100**2)
-  #     sigma_b = yield tfp.distributions.half_cauchy\
-  #                                      .HalfCauchy(loc=0, scale=100**2)\
-  #                                      .log_prob(5)
-  #     a = yield dist.Normal('a', mu=mu_a, sd=sigma_a, shape=n_counties)
-  #     b = yield dist.Normal('b', mu=mu_b, sd=sigma_b, shape=n_counties)
-  #     eps = yield tfp.distributions.half_cauchy\
-  #                                  .HalfCauchy(loc=0, scale=100**2)\
-  #                                  .log_prob(5)
-  #     radon_est = a[county_idx] + b[county_idx] * data.floor.values
-  #     radon_like = yield dist.Normal('radon_like', mu=radon_est, sd=eps,
-  #                                    observed=data.log_radon)
-  #     return radon_like
+  ret, state = pm.evaluate_model(model_centered())
 #+END_SRC
 
 
