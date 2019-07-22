@@ -391,7 +391,7 @@ object back. We can do this with the following,
   ret1, state1 = pm.evaluate_model(model1)
   ret2, state2 = pm.evaluate_model(model1)
 
-  # Make sure to show how the defualt sucks ass.
+  # Make sure to show how the defualt has flaws
 #+END_SRC
 
 
