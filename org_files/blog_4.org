@@ -58,7 +58,7 @@ Consider the following,
       return q
 
 
-  with graph_mode():
+  with graph_model():
       model = transform_example()
       obs_graph, state = pm.evaluate_model(model)
 
@@ -159,7 +159,7 @@ As mentioned in my last blog converting ~PyMC4~ objects to
 * Optimize ~symbolic-pymc model
 
 #+BEGIN_SRC python -n :exports both :results output
-  from kanren import lall, eq
+  from kanren import lall, eq, run
   from unification import var
   from symbolic_pymc.relations.graph import graph_applyo
   from symbolic_pymc.etuple import ExpressionTuple
@@ -173,7 +173,7 @@ As mentioned in my last blog converting ~PyMC4~ objects to
       return lall(eq(expanded_term, Q_mt),
                   eq(reduced_term, cauchy_mt))
 
-
+  # simplify_graph(obs_graph)
   def simplify_graph(expanded_term):
       expanded_term = mt(expanded_term)
       reduced_term = var()
@@ -197,9 +197,9 @@ As mentioned in my last blog converting ~PyMC4~ objects to
   # Use tfp cauchy (sample) and expression tuples
   def tfp_cauchy(loc, scale, n=1000):
       with graph_mode():
-          shape = tf.concat([[n], batch_shape_tensor(loc, scale)], 0)
+          shape = mt.concat(0, [[n], batch_shape_tensor(loc, scale)])
           probs = mt.random.uniform(
-              shape=shape, minval=0., maxval=1., dtype=tf.float32, seed=None)
+              shape=shape.obj, minval=0., maxval=1., dtype=tf.float32, seed=None)
           return mt.add(float(loc),
                         mt.mul(float(scale),
                                mt.tan(mt.mul(np.pi, mt.sub(probs, .5)))))
@@ -251,7 +251,7 @@ As mentioned in my last blog converting ~PyMC4~ objects to
 After we've manipulated the graph we now need to convert the resulting
 object back. We can do this with the following,
 
-* Ideas :noexport:
+* Ideas                                                            :noexport:
 ** Look at Automatic Re-centering and Re-scaling
 *** Convert to pymc4 using tensorflow
 **** Look at https://colab.research.google.com/github/tensorflow/probability/blob/master/tensorflow_probability/examples/jupyter_notebooks/HLM_TFP_R_Stan.ipynb#scrollTo=QkchUh3V382r 
@@ -395,3 +395,102 @@ object back. We can do this with the following,
 #+END_SRC
 
 
+
+* Questions :noexport:
+In the following code I am able to convert the objects to their
+~symbolic-pymc~ objects. However, the goals evaluate and return
+nothing.
+
+#+BEGIN_SRC python -n :exports both :results output
+  from kanren import lall, eq, run
+
+  from unification import var
+
+  import numpy as np
+
+  import pandas as pd
+
+  import pymc4 as pm
+
+  from pymc4 import distributions as dist
+
+  from symbolic_pymc.relations.graph import graph_applyo
+
+  from symbolic_pymc.etuple import ExpressionTuple
+
+  from symbolic_pymc.tensorflow.meta import mt
+
+  from symbolic_pymc.relations.tensorflow import *
+
+  from symbolic_pymc.tensorflow.printing import tf_dprint
+
+  import tensorflow as tf
+
+  import tensorflow_probability as tfp
+
+  from tensorflow.python.eager.context import graph_mode
+
+  from tensorflow_probability.python.internal import tensor_util
+
+
+  @pm.model
+  def transform_example():
+      x = dist.Normal('x', mu=0, sigma=1).sample(shape=(1000, ))
+      y = dist.Normal('y', mu=0, sigma=1e-20).sample(shape=(1000, ))
+      #z = yield dist.Normal('z', mu=x/y, sigma=x/y)
+      q = x/y
+      yield None
+      return q
+
+
+  with graph_mode():
+      model = transform_example()
+      obs_graph, state = pm.evaluate_model(model)
+
+  def cauchy_reduceo(expanded_term, reduced_term):
+      X_mt = tfp_normal(0, 1)
+      Y_mt = tfp_normal(0, 1)
+      cauchy_mt = tfp_cauchy(0, 1)
+      Q_mt = mt.realdiv(X_mt, Y_mt, name=var())
+      return lall(eq(expanded_term, Q_mt),
+                  eq(reduced_term, cauchy_mt))
+
+  # simplify_graph(obs_graph)
+  def simplify_graph(expanded_term):
+      expanded_term = mt(expanded_term)
+      reduced_term = var()
+
+      graph_goal = graph_applyo(cauchy_reduceo, expanded_term, reduced_term)
+      res = run(1, reduced_term, graph_goal)
+      res_tf = res[0].eval_obj.reify()
+      return res_tf
+
+
+  def tfp_normal(loc, scale, n=1000):
+      # might need n (to track)
+      with graph_mode():
+          shape = mt.concat(0, [[n], batch_shape_tensor(loc, scale)])
+          sampled = mt.random.normal(
+              shape=shape.obj, mean=0., stddev=1., dtype=tf.float32, seed=None)
+          # need to use corresponding mt operator (mt.add, mt.mul?)
+          return mt.add(mt.mul(sampled, scale), loc)
+
+
+  # Use tfp cauchy (sample) and expression tuples
+  def tfp_cauchy(loc, scale, n=1000):
+      with graph_mode():
+          shape = mt.concat(0, [[n], batch_shape_tensor(loc, scale)])
+          probs = mt.random.uniform(
+              shape=shape.obj, minval=0., maxval=1., dtype=tf.float32, seed=None)
+          return mt.add(float(loc),
+                        mt.mul(float(scale),
+                               mt.tan(mt.mul(np.pi, mt.sub(probs, .5)))))
+
+
+  def batch_shape_tensor(loc, scale):
+    t = tf.broadcast_dynamic_shape(
+        tf.shape(input=tensor_util.convert_immutable_to_tensor(loc)),#, out_type=tf.float32),
+        tf.shape(input=tensor_util.convert_immutable_to_tensor(scale)))#, out_type=tf.float32))
+    return t
+
+#+END_SRC
