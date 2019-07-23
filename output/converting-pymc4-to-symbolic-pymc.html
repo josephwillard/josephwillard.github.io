@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Converting `PyMC4` to `Symbolic-PyMC`</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Joseph Willard">
+
+    <!-- Le styles -->
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+      .tag-1 {
+        font-size: 13pt;
+      }
+      .tag-2 {
+        font-size: 10pt;
+      }
+      .tag-2 {
+        font-size: 8pt;
+      }
+      .tag-4 {
+        font-size: 6pt;
+     }
+    </style>
+    <link href="/theme/css/bootstrap-responsive.min.css" rel="stylesheet">
+        <link href="/theme/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/theme/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/theme/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/theme/images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/theme/images/apple-touch-icon-114x114.png">
+
+    <link href="/" type="application/atom+xml" rel="alternate" title="Joseph Willard's Blog ATOM Feed" />
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="/index.html">Joseph Willard's Blog </a>
+          <div class="nav-collapse">
+            <ul class="nav">
+                <li><a href="/pages/about-me.html">About Me</a></li>
+                          <li class="divider-vertical"></li>
+                  <li class="active">
+                    <a href="/category/gsoc.html">
+						<i class="icon-folder-open icon-large"></i>GSoC
+					</a>
+                  </li>
+                  <li >
+                    <a href="/category/misc.html">
+						<i class="icon-folder-open icon-large"></i>misc
+					</a>
+                  </li>
+
+                          <ul class="nav pull-right">
+                                <li><a href="/archives.html"><i class="icon-th-list"></i>Archives</a></li>
+                          </ul>
+
+            </ul>
+            <!--<p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>-->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="span9" id="content">
+<section id="content">
+        <article>
+                <header>
+                        <h1>
+                                <a href=""
+                                        rel="bookmark"
+                                        title="Permalink to Converting `PyMC4` to `Symbolic-PyMC`">
+                                        Converting `PyMC4` to `Symbolic-PyMC`
+                                </a>
+                        </h1>
+                </header>
+                <div class="entry-content">
+                <div class="well">
+<footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2019-07-08T00:00:00-04:00">
+        <i class="icon-calendar"></i>Mon 08 July 2019
+</abbr>
+<span class="label">By</span>
+<a href="/author/joseph-willard.html"><i class="icon-user"></i>Joseph Willard</a>
+<span class="label">Category</span>
+<a href="/category/gsoc.html"><i class="icon-folder-open"></i>GSoC</a>.
+
+
+</footer><!-- /.post-info -->                </div>
+                <h1>Closing Loose Ends</h1>
+<p>Picking up from my last blog we are now in the position to
+use <code>kanren</code> and <code>Symbolic-PyMC</code> together to walk and replace sections
+in our SVD graph problem.</p>
+<div class="highlight"><pre><span></span> <span class="mi">1</span>  <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="kn">as</span> <span class="nn">tf</span>
+ <span class="mi">2</span>  
+ <span class="mi">3</span>  <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+ <span class="mi">4</span>  
+ <span class="mi">5</span>  <span class="kn">from</span> <span class="nn">unification</span> <span class="kn">import</span> <span class="kp">var</span>
+ <span class="mi">6</span>  
+ <span class="mi">7</span>  <span class="kn">from</span> <span class="nn">kanren</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">eq</span><span class="p">,</span> <span class="n">lall</span>
+ <span class="mi">8</span>  
+ <span class="mi">9</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.etuple</span> <span class="kn">import</span> <span class="n">etuple</span><span class="p">,</span> <span class="n">ExpressionTuple</span>
+<span class="mi">10</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.relations.graph</span> <span class="kn">import</span> <span class="n">graph_applyo</span>
+<span class="mi">11</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.tensorflow.meta</span> <span class="kn">import</span> <span class="n">mt</span>
+<span class="mi">12</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.tensorflow.printing</span> <span class="kn">import</span> <span class="n">tf_dprint</span>
+<span class="mi">13</span>  
+<span class="mi">14</span>  
+<span class="mi">15</span>  <span class="n">X</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+<span class="mi">16</span>  <span class="n">S</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">transpose_a</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="mi">17</span>  <span class="n">d</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="kp">svd</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+<span class="mi">18</span>  <span class="n">S_2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="kp">diag</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">V</span><span class="p">,</span> <span class="n">adjoint_b</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+<span class="mi">19</span>  <span class="n">ans</span> <span class="o">=</span> <span class="n">S</span> <span class="o">-</span> <span class="n">S_2</span>
+<span class="mi">20</span>  
+<span class="mi">21</span>  <span class="k">def</span> <span class="nf">svd_reduceo</span><span class="p">(</span><span class="n">expanded_term</span><span class="p">,</span> <span class="n">reduced_term</span><span class="p">):</span>
+<span class="mi">22</span>      <span class="n">S_lv</span> <span class="o">=</span> <span class="kp">var</span><span class="p">()</span>
+<span class="mi">23</span>      <span class="n">d_mt</span><span class="p">,</span> <span class="n">U_mt</span><span class="p">,</span> <span class="n">V_mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="kp">svd</span><span class="p">(</span><span class="n">S_lv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kp">var</span><span class="p">())</span>
+<span class="mi">24</span>  
+<span class="mi">25</span>      <span class="n">t1</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">matrixdiag</span><span class="p">(</span><span class="n">d_mt</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kp">var</span><span class="p">())</span>
+<span class="mi">26</span>      <span class="n">t2</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">V_mt</span><span class="p">,</span> <span class="n">transpose_a</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">transpose_b</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kp">var</span><span class="p">())</span>
+<span class="mi">27</span>      <span class="n">template_mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">U_mt</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">transpose_a</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">transpose_b</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kp">var</span><span class="p">())</span>
+<span class="mi">28</span>  
+<span class="mi">29</span>      <span class="c1"># This is a workaround to reference issue #47.</span>
+<span class="mi">30</span>      <span class="n">d_mt</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">node_def</span><span class="o">.</span><span class="n">attr</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="mi">31</span>      <span class="n">t1</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">node_def</span><span class="o">.</span><span class="n">attr</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="mi">32</span>      <span class="n">t2</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">node_def</span><span class="o">.</span><span class="n">attr</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="mi">33</span>      <span class="n">template_mt</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">node_def</span><span class="o">.</span><span class="n">attr</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="mi">34</span>  
+<span class="mi">35</span>      <span class="k">return</span> <span class="n">lall</span><span class="p">(</span><span class="n">eq</span><span class="p">(</span><span class="n">expanded_term</span><span class="p">,</span> <span class="n">template_mt</span><span class="p">),</span>
+<span class="mi">36</span>          <span class="n">eq</span><span class="p">(</span><span class="n">reduced_term</span><span class="p">,</span> <span class="n">S_lv</span><span class="p">))</span>
+<span class="mi">37</span>  
+<span class="mi">38</span>  
+<span class="mi">39</span>  <span class="k">def</span> <span class="nf">simplify_graph</span><span class="p">(</span><span class="n">expanded_term</span><span class="p">):</span>
+<span class="mi">40</span>      <span class="n">expanded_term</span> <span class="o">=</span> <span class="n">mt</span><span class="p">(</span><span class="n">expanded_term</span><span class="p">)</span>
+<span class="mi">41</span>      <span class="n">reduced_term</span> <span class="o">=</span> <span class="kp">var</span><span class="p">()</span>
+<span class="mi">42</span>  
+<span class="mi">43</span>      <span class="n">graph_goal</span> <span class="o">=</span> <span class="n">graph_applyo</span><span class="p">(</span><span class="n">svd_reduceo</span><span class="p">,</span> <span class="n">expanded_term</span><span class="p">,</span> <span class="n">reduced_term</span><span class="p">)</span>
+<span class="mi">44</span>      <span class="n">res</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">reduced_term</span><span class="p">,</span> <span class="n">graph_goal</span><span class="p">)</span>
+<span class="mi">45</span>      <span class="n">res_tf</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">eval_obj</span><span class="o">.</span><span class="n">reify</span><span class="p">()</span>
+<span class="mi">46</span>      <span class="k">return</span> <span class="n">res_tf</span>
+<span class="mi">47</span>  
+<span class="mi">48</span>  <span class="n">tf_dprint</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
+<span class="mi">49</span>  <span class="n">tf_dprint</span><span class="p">(</span><span class="n">simplify_graph</span><span class="p">(</span><span class="n">ans</span><span class="p">))</span>
+
+<span class="n">Tensor</span><span class="p">(</span><span class="n">Sub</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;sub:0&quot;</span>
+<span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Sub</span><span class="p">)</span>  <span class="s2">&quot;sub&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span> <span class="s2">&quot;MatMul&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;X:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;X:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_2:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span> <span class="s2">&quot;MatMul_2&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Svd</span><span class="p">):</span><span class="mi">1</span><span class="p">,</span>  <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;Svd:1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Svd</span><span class="p">)</span>  <span class="s2">&quot;Svd&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">...</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>   <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span>   <span class="s2">&quot;MatMul_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatrixDiag</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatrixDiag:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatrixDiag</span><span class="p">)</span> <span class="s2">&quot;MatrixDiag&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Svd</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;Svd:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Svd</span><span class="p">)</span>  <span class="s2">&quot;Svd&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">...</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Svd</span><span class="p">):</span><span class="mi">2</span><span class="p">,</span>    <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;Svd:2&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Svd</span><span class="p">)</span>    <span class="s2">&quot;Svd&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>   <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">...</span>
+<span class="n">Tensor</span><span class="p">(</span><span class="n">Sub</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;sub_1:0&quot;</span>
+<span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Sub</span><span class="p">)</span>  <span class="s2">&quot;sub_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">MatMul</span><span class="p">)</span> <span class="s2">&quot;MatMul&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;X:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;X:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">MatMul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="kp">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="s2">&quot;MatMul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">...</span>
+</pre></div>
+
+
+<p>We have now seen a way to move from <code>TensorFlow</code> to <code>Symbolic-PyMC</code>
+and traverse a graph. Note that <code>simplify_graph</code> is equivalent to
+<code>str_optimize</code> from the analogy. How does this relate to <code>PyMC4</code>?</p>
+<h1>A look into new pymc4 models</h1>
+<p>As of the date this blog has been posted <code>PyMC4</code> received a large
+update introducing generative models. In previous iterations of
+<code>PyMC4</code> conversion would have involved trying to pinpoint what
+<code>TensorFlow</code> object represented the observations. Luckily, with the
+recent changes this can be controlled by the user creating the model
+relieving the need for searching on <code>Symbolic-PyMCs</code> part.</p>
+<p>Consider the following model,</p>
+<div class="highlight"><pre><span></span> <span class="mi">1</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.tensorflow.meta</span> <span class="kn">import</span> <span class="n">mt</span>
+ <span class="mi">2</span>  
+ <span class="mi">3</span>  <span class="kn">from</span> <span class="nn">tensorflow.python.framework.ops</span> <span class="kn">import</span> <span class="n">disable_eager_execution</span>
+ <span class="mi">4</span>  <span class="n">disable_eager_execution</span><span class="p">()</span>
+ <span class="mi">5</span>  
+ <span class="mi">6</span>  <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+ <span class="mi">7</span>  
+ <span class="mi">8</span>  <span class="kn">import</span> <span class="nn">pymc4</span> <span class="kn">as</span> <span class="nn">pm</span>
+ <span class="mi">9</span>  
+<span class="mi">10</span>  <span class="kn">from</span> <span class="nn">pymc4</span> <span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">dist</span>
+<span class="mi">11</span>  
+<span class="mi">12</span>  <span class="nd">@pm.model</span><span class="p">(</span><span class="n">keep_return</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="mi">13</span>  <span class="k">def</span> <span class="nf">nested_model</span><span class="p">(</span><span class="n">intercept</span><span class="p">,</span> <span class="n">x_coeff</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="mi">14</span>      <span class="n">y</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">intercept</span> <span class="o">+</span> <span class="n">x_coeff</span><span class="o">.</span><span class="kp">sample</span><span class="p">()</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="mi">15</span>      <span class="k">return</span> <span class="n">y</span>
+<span class="mi">16</span>  
+<span class="mi">17</span>  
+<span class="mi">18</span>  <span class="nd">@pm.model</span>
+<span class="mi">19</span>  <span class="k">def</span> <span class="nf">main_model</span><span class="p">():</span>
+<span class="mi">20</span>      <span class="n">intercept</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="s2">&quot;intercept&quot;</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="mi">21</span>      <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="kp">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="mi">22</span>      <span class="n">x_coeff</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="s2">&quot;x_coeff&quot;</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="mi">23</span>      <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">nested_model</span><span class="p">(</span><span class="n">intercept</span><span class="p">,</span> <span class="n">x_coeff</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="mi">24</span>      <span class="k">return</span> <span class="n">result</span>
+<span class="mi">25</span>  
+<span class="mi">26</span>  <span class="n">ret</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">evaluate_model</span><span class="p">(</span><span class="n">main_model</span><span class="p">())</span>
+<span class="mi">27</span>  <span class="n">_</span> <span class="o">=</span> <span class="p">[</span><span class="n">ret</span><span class="p">,</span> <span class="n">state</span><span class="p">]</span>
+
+<span class="p">[</span><span class="o">&lt;</span><span class="n">tf</span><span class="o">.</span><span class="n">Tensor</span> <span class="s1">&#39;y_3_1/sample/Reshape:0&#39;</span> <span class="kp">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,)</span> <span class="kp">dtype</span><span class="o">=</span><span class="n">float32</span><span class="o">&gt;</span><span class="p">,</span>
+ <span class="n">SamplingState</span><span class="p">(</span>
+    <span class="n">values</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;main_model/intercept&#39;</span><span class="p">,</span> <span class="s1">&#39;main_model/nested_model/y&#39;</span><span class="p">,</span> <span class="s1">&#39;main_model&#39;</span><span class="p">]</span>
+    <span class="n">distributions</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Normal:main_model/intercept&#39;</span><span class="p">,</span> <span class="s1">&#39;Normal:main_model/nested_model/y&#39;</span><span class="p">]</span>
+    <span class="n">num_potentials</span><span class="o">=</span><span class="mi">0</span>
+<span class="p">)]</span>
+</pre></div>
+
+
+<p>Since the output of models in <code>PyMC4</code> are <code>TensorFlow</code> objects, which
+<code>Symbolic-PyMC</code> is already setup to deal with. This means one can convert
+<code>PyMC4</code> models to <code>Symbolic-PyMC</code> meta objects trivially by</p>
+<div class="highlight"><pre><span></span>1  ret_mt = mt(ret)
+2  _ = ret_mt
+
+TFlowMetaTensor(tf.float32, TFlowMetaOp(TFlowMetaOpDef(obj=name: &quot;Reshape&quot;
+i...f.Operation &#39;y_3_1/sample/Reshape&#39; type=Reshape&gt;), 0, TFlowMetaTensorShape(100,),, obj=TensorShape([100])), &#39;y_3_1/sample/Reshape:0&#39;, obj=&lt;tf.Tensor &#39;y_3_1/sample/Reshape:0&#39; shape=(100,) dtype=float32&gt;)
+</pre></div>
+
+
+<p>To move in reverse we only have to call reify on the new object</p>
+<div class="highlight"><pre><span></span>1  _ = ret_mt.reify()
+
+&lt;tf.Tensor &#39;y_3_1/sample/Reshape:0&#39; shape=(100,) dtype=float32&gt;
+</pre></div>
+
+
+<h1>Moving forward</h1>
+<p>From this point there are a few topics that need to be tackled. The
+first is how do we implement the conversion of <code>PyMC4</code> models into
+<code>Symbolic-PyMC</code> models behind the scenes? One way would be to expand
+on the dispatcher that already runs on <code>TensorFlow</code> objects to now
+consider <code>PyMC4</code> models. Other questions that have come up while
+digging into this is whether there exists a way to reconstruct a graph
+when eager mode is enabled.</p>
+                </div><!-- /.entry-content -->
+        </article>
+</section>
+        </div><!--/span-->
+
+                <div class="span3 well sidebar-nav" id="sidebar">
+<ul class="nav nav-list">
+<li class="nav-header"><h4><i class="icon-external-link"></i>blogroll</h4></li>
+    <li><a href="https://twiecki.io/"><i class="icon-external-link"></i>Twiecki's</a></li>
+    <li><a href="https://docs.pymc.io/"><i class="icon-external-link"></i>PyMC3</a></li>
+<li class="nav-header"><h4><i class="icon-home icon-large"></i> social</h4></li>
+    <li><a href="https://github.com/josephwillard"><i class="icon-github-sign icon-large"></i>github</a></li>
+    <li><a href="https://www.linkedin.com/in/joseph-willard-5040a4117/"><i class="icon-linkedin-sign icon-large"></i>linkedin</a></li>
+
+<li class="nav-header"><h4><i class="icon-folder-close icon-large"></i>Categories</h4></li>
+<li>
+<a href="/category/gsoc.html">
+    <i class="icon-folder-open icon-large"></i>GSoC
+</a>
+</li>
+<li>
+<a href="/category/misc.html">
+    <i class="icon-folder-open icon-large"></i>misc
+</a>
+</li>
+
+<li class="nav-header"><h4><i class="icon-tags icon-large"></i>Tags</h4></li>
+
+
+</ul>        </div><!--/.well -->
+
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <address id="about">
+                Proudly powered by <a href="http://pelican.notmyidea.org/">Pelican <i class="icon-external-link"></i></a>,
+                                which takes great advantage of <a href="http://python.org">Python <i class="icon-external-link"></i></a>.
+        </address><!-- /#about -->
+
+        <p>The theme is from <a href="http://twitter.github.com/bootstrap/">Bootstrap from Twitter <i class="icon-external-link"></i></a>,
+                   and <a href="http://fortawesome.github.com/Font-Awesome/">Font-Awesome <i class="icon-external-link"></i></a>, thanks!</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+
+
+    <!-- Le javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/theme/js/jquery-1.7.2.min.js"></script>
+    <script src="/theme/js/bootstrap.min.js"></script>
+  </body>
+</html>
