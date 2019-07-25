@@ -248,7 +248,7 @@ Cauchy distribution. Looking at the above graph it's clear that it
 does not consider this reduction. This becomes a perfect situation for</p>
 <p><code>symbolic-pymc</code>! To do this we need to again construct a template to
 unify against like in the svd example. </p>
-<h1>Converting <code>PyMC4</code> model to <code>symbolic-pymc</code></h1>
+<h1>Converting PyMC4 model to symbolic-pymc</h1>
 <p>As mentioned in my last blog converting <code>PyMC4</code> objects to
 <code>symbolic-pymc</code> objects is relatively simple,</p>
 <div class="highlight"><pre><span></span>1  model_mt = mt(obs_graph)
@@ -259,7 +259,7 @@ unify against like in the svd example. </p>
 </pre></div>
 
 
-<h1>manipulating the <code>symbolic-pymc</code> graph</h1>
+<h1>manipulating the symbolic-pymc graph</h1>
 <p>To manipulate the graph we need to create a goal (<code>caucy_reduceo</code>)
 That first takes a term we want to manipulate and creates a template
 to unify against (<code>Q_mt</code>). With this template we need to then unify it
