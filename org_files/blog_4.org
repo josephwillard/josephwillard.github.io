@@ -13,38 +13,23 @@
 #+OPTIONS: toc:nil
 
 * Second evaluation and moving forward
-During this second stretch I was able to have another PR accepted. I
-also began looking into how one might convert a ~PyMC4~ model to
+During this second stretch I was able to have another PR accepted. This
+also began the phase of looking into how one might convert a ~PyMC4~ model to
 ~symbolic-pymc~. This process was the topic of my last blog where I
 not only closed my discussion on my svd problem. I also showed that
 converting ~PyMC4~ model to a ~symbolic-pymc~ meta object is a pretty
 straight forward operation after the recent changes to ~PyMC4~. 
 
-    What about converting a ~PyMC4~ model to a ~symbolic-pymc~ meta object
-making improvements and then converting it back? Consider the following,
+    What about converting a ~PyMC4~ model to a ~symbolic-pymc~ meta
+object making improvements and then converting it back? In the
+following ratio of normals example I am not accounting for shape since
+~PyMC4~ does not directly account for it without using ~sample~ from
+the underlying ~tensorflowprobability~ object.
 
-#+BEGIN_SRC python -n :exports both :results output :wrap "src python :eval never"
-  import numpy as np
-
-  import pandas as pd
-
-  import pymc4 as pm
-
-  from pymc4.distributions import abstract
-
+#+BEGIN_SRC python -n :exports both :results output :wrap "src python"
   from pymc4 import distributions as dist
 
-  from pymc4.distributions.tensorflow.distribution import BackendDistribution
-
-  from unification import var
-
-  from kanren import run
-
   from symbolic_pymc.tensorflow.meta import mt
-
-  from symbolic_pymc.relations.tensorflow import *
-
-  from symbolic_pymc.tensorflow.printing import tf_dprint
 
   import tensorflow as tf
 
@@ -54,10 +39,9 @@ making improvements and then converting it back? Consider the following,
 
   @pm.model
   def transform_example():
-      x = dist.Normal('x', mu=0, sigma=1).sample(shape=(1000, ))
-      y = dist.Normal('y', mu=0, sigma=1e-20).sample(shape=(1000, ))
+      x = yield dist.Normal('x', mu=0, sigma=1)
+      y = yield dist.Normal('y', mu=0, sigma=1)
       q = tf.realdiv(x, y)
-      yield None
       return q
 
 
@@ -66,79 +50,82 @@ making improvements and then converting it back? Consider the following,
       obs_graph, state = pm.evaluate_model(model)
 
   _ = tf_dprint(obs_graph)
+
 #+END_SRC
 
 #+RESULTS:
-:RESULTS:
-Tensor(RealDiv):0,	shape=[1000]	"truediv_8:0"
-|  Op(RealDiv)	"truediv_8"
-|  |  Tensor(Reshape):0,	shape=[1000]	"x_9_1/sample/Reshape:0"
-|  |  |  Op(Reshape)	"x_9_1/sample/Reshape"
-|  |  |  |  Tensor(Add):0,	shape=[1000]	"x_9_1/sample/add:0"
-|  |  |  |  |  Op(Add)	"x_9_1/sample/add"
-|  |  |  |  |  |  Tensor(Mul):0,	shape=[1000]	"x_9_1/sample/mul:0"
-|  |  |  |  |  |  |  Op(Mul)	"x_9_1/sample/mul"
-|  |  |  |  |  |  |  |  Tensor(Add):0,	shape=[1000]	"x_9_1/sample/random_normal:0"
-|  |  |  |  |  |  |  |  |  Op(Add)	"x_9_1/sample/random_normal"
-|  |  |  |  |  |  |  |  |  |  Tensor(Mul):0,	shape=[1000]	"x_9_1/sample/random_normal/mul:0"
-|  |  |  |  |  |  |  |  |  |  |  Op(Mul)	"x_9_1/sample/random_normal/mul"
-|  |  |  |  |  |  |  |  |  |  |  |  Tensor(RandomStandardNormal):0,	shape=[1000]	"x_9_1/sample/random_normal/RandomStandardNormal:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  Op(RandomStandardNormal)	"x_9_1/sample/random_normal/RandomStandardNormal"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(ConcatV2):0,	shape=[1]	"x_9_1/sample/concat:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Op(ConcatV2)	"x_9_1/sample/concat"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"x_9_1/sample/concat/values_0:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Identity):0,	shape=[0]	"x_9_1/sample/x_9/batch_shape_tensor/batch_shape:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Op(Identity)	"x_9_1/sample/x_9/batch_shape_tensor/batch_shape"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[0]	"x_9_1/sample/x_9/batch_shape_tensor/Const:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"x_9_1/sample/concat/axis:0"
-|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"x_9_1/sample/random_normal/stddev:0"
-|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"x_9_1/sample/random_normal/mean:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"x_9/scale:0"
-|  |  |  |  |  |  Tensor(Const):0,	shape=[]	"x_9/loc:0"
-|  |  |  |  Tensor(ConcatV2):0,	shape=[1]	"x_9_1/sample/concat_1:0"
-|  |  |  |  |  Op(ConcatV2)	"x_9_1/sample/concat_1"
-|  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"x_9_1/sample/sample_shape:0"
-|  |  |  |  |  |  Tensor(StridedSlice):0,	shape=[0]	"x_9_1/sample/strided_slice:0"
-|  |  |  |  |  |  |  Op(StridedSlice)	"x_9_1/sample/strided_slice"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"x_9_1/sample/Shape:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"x_9_1/sample/strided_slice/stack:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"x_9_1/sample/strided_slice/stack_1:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"x_9_1/sample/strided_slice/stack_2:0"
-|  |  |  |  |  |  Tensor(Const):0,	shape=[]	"x_9_1/sample/concat_1/axis:0"
-|  |  Tensor(Reshape):0,	shape=[1000]	"y_9_1/sample/Reshape:0"
-|  |  |  Op(Reshape)	"y_9_1/sample/Reshape"
-|  |  |  |  Tensor(Add):0,	shape=[1000]	"y_9_1/sample/add:0"
-|  |  |  |  |  Op(Add)	"y_9_1/sample/add"
-|  |  |  |  |  |  Tensor(Mul):0,	shape=[1000]	"y_9_1/sample/mul:0"
-|  |  |  |  |  |  |  Op(Mul)	"y_9_1/sample/mul"
-|  |  |  |  |  |  |  |  Tensor(Add):0,	shape=[1000]	"y_9_1/sample/random_normal:0"
-|  |  |  |  |  |  |  |  |  Op(Add)	"y_9_1/sample/random_normal"
-|  |  |  |  |  |  |  |  |  |  Tensor(Mul):0,	shape=[1000]	"y_9_1/sample/random_normal/mul:0"
-|  |  |  |  |  |  |  |  |  |  |  Op(Mul)	"y_9_1/sample/random_normal/mul"
-|  |  |  |  |  |  |  |  |  |  |  |  Tensor(RandomStandardNormal):0,	shape=[1000]	"y_9_1/sample/random_normal/RandomStandardNormal:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  Op(RandomStandardNormal)	"y_9_1/sample/random_normal/RandomStandardNormal"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(ConcatV2):0,	shape=[1]	"y_9_1/sample/concat:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Op(ConcatV2)	"y_9_1/sample/concat"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"y_9_1/sample/concat/values_0:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Identity):0,	shape=[0]	"y_9_1/sample/y_9/batch_shape_tensor/batch_shape:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Op(Identity)	"y_9_1/sample/y_9/batch_shape_tensor/batch_shape"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[0]	"y_9_1/sample/y_9/batch_shape_tensor/Const:0"
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"y_9_1/sample/concat/axis:0"
-|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"y_9_1/sample/random_normal/stddev:0"
-|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"y_9_1/sample/random_normal/mean:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"y_9/scale:0"
-|  |  |  |  |  |  Tensor(Const):0,	shape=[]	"y_9/loc:0"
-|  |  |  |  Tensor(ConcatV2):0,	shape=[1]	"y_9_1/sample/concat_1:0"
-|  |  |  |  |  Op(ConcatV2)	"y_9_1/sample/concat_1"
-|  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"y_9_1/sample/sample_shape:0"
-|  |  |  |  |  |  Tensor(StridedSlice):0,	shape=[0]	"y_9_1/sample/strided_slice:0"
-|  |  |  |  |  |  |  Op(StridedSlice)	"y_9_1/sample/strided_slice"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"y_9_1/sample/Shape:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"y_9_1/sample/strided_slice/stack:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"y_9_1/sample/strided_slice/stack_1:0"
-|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"y_9_1/sample/strided_slice/stack_2:0"
-|  |  |  |  |  |  Tensor(Const):0,	shape=[]	"y_9_1/sample/concat_1/axis:0"
-:END:
+#+BEGIN_src python
+Tensor(RealDiv):0,	shape=[]	"RealDiv_1:0"
+|  Op(RealDiv)	"RealDiv_1"
+|  |  Tensor(Reshape):0,	shape=[]	"Normal_3_1/sample/Reshape:0"
+|  |  |  Op(Reshape)	"Normal_3_1/sample/Reshape"
+|  |  |  |  Tensor(AddV2):0,	shape=[1]	"Normal_3_1/sample/add:0"
+|  |  |  |  |  Op(AddV2)	"Normal_3_1/sample/add"
+|  |  |  |  |  |  Tensor(Mul):0,	shape=[1]	"Normal_3_1/sample/mul:0"
+|  |  |  |  |  |  |  Op(Mul)	"Normal_3_1/sample/mul"
+|  |  |  |  |  |  |  |  Tensor(Add):0,	shape=[1]	"Normal_3_1/sample/random_normal:0"
+|  |  |  |  |  |  |  |  |  Op(Add)	"Normal_3_1/sample/random_normal"
+|  |  |  |  |  |  |  |  |  |  Tensor(Mul):0,	shape=[1]	"Normal_3_1/sample/random_normal/mul:0"
+|  |  |  |  |  |  |  |  |  |  |  Op(Mul)	"Normal_3_1/sample/random_normal/mul"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(RandomStandardNormal):0,	shape=[1]	"Normal_3_1/sample/random_normal/RandomStandardNormal:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  Op(RandomStandardNormal)	"Normal_3_1/sample/random_normal/RandomStandardNormal"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(ConcatV2):0,	shape=[1]	"Normal_3_1/sample/concat:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Op(ConcatV2)	"Normal_3_1/sample/concat"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_3_1/sample/concat/values_0:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(BroadcastArgs):0,	shape=[0]	"Normal_3_1/sample/BroadcastArgs:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Op(BroadcastArgs)	"Normal_3_1/sample/BroadcastArgs"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[0]	"Normal_3_1/sample/Shape:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[0]	"Normal_3_1/sample/Shape_1:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_3_1/sample/concat/axis:0"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_3_1/sample/random_normal/stddev:0"
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_3_1/sample/random_normal/mean:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_3/scale:0"
+|  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_3/loc:0"
+|  |  |  |  Tensor(ConcatV2):0,	shape=[0]	"Normal_3_1/sample/concat_1:0"
+|  |  |  |  |  Op(ConcatV2)	"Normal_3_1/sample/concat_1"
+|  |  |  |  |  |  Tensor(Const):0,	shape=[0]	"Normal_3_1/sample/sample_shape:0"
+|  |  |  |  |  |  Tensor(StridedSlice):0,	shape=[0]	"Normal_3_1/sample/strided_slice:0"
+|  |  |  |  |  |  |  Op(StridedSlice)	"Normal_3_1/sample/strided_slice"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_3_1/sample/Shape_2:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_3_1/sample/strided_slice/stack:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_3_1/sample/strided_slice/stack_1:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_3_1/sample/strided_slice/stack_2:0"
+|  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_3_1/sample/concat_1/axis:0"
+|  |  Tensor(Reshape):0,	shape=[]	"Normal_4_1/sample/Reshape:0"
+|  |  |  Op(Reshape)	"Normal_4_1/sample/Reshape"
+|  |  |  |  Tensor(AddV2):0,	shape=[1]	"Normal_4_1/sample/add:0"
+|  |  |  |  |  Op(AddV2)	"Normal_4_1/sample/add"
+|  |  |  |  |  |  Tensor(Mul):0,	shape=[1]	"Normal_4_1/sample/mul:0"
+|  |  |  |  |  |  |  Op(Mul)	"Normal_4_1/sample/mul"
+|  |  |  |  |  |  |  |  Tensor(Add):0,	shape=[1]	"Normal_4_1/sample/random_normal:0"
+|  |  |  |  |  |  |  |  |  Op(Add)	"Normal_4_1/sample/random_normal"
+|  |  |  |  |  |  |  |  |  |  Tensor(Mul):0,	shape=[1]	"Normal_4_1/sample/random_normal/mul:0"
+|  |  |  |  |  |  |  |  |  |  |  Op(Mul)	"Normal_4_1/sample/random_normal/mul"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(RandomStandardNormal):0,	shape=[1]	"Normal_4_1/sample/random_normal/RandomStandardNormal:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  Op(RandomStandardNormal)	"Normal_4_1/sample/random_normal/RandomStandardNormal"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(ConcatV2):0,	shape=[1]	"Normal_4_1/sample/concat:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Op(ConcatV2)	"Normal_4_1/sample/concat"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_4_1/sample/concat/values_0:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(BroadcastArgs):0,	shape=[0]	"Normal_4_1/sample/BroadcastArgs:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Op(BroadcastArgs)	"Normal_4_1/sample/BroadcastArgs"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[0]	"Normal_4_1/sample/Shape:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[0]	"Normal_4_1/sample/Shape_1:0"
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_4_1/sample/concat/axis:0"
+|  |  |  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_4_1/sample/random_normal/stddev:0"
+|  |  |  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_4_1/sample/random_normal/mean:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_4/scale:0"
+|  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_4/loc:0"
+|  |  |  |  Tensor(ConcatV2):0,	shape=[0]	"Normal_4_1/sample/concat_1:0"
+|  |  |  |  |  Op(ConcatV2)	"Normal_4_1/sample/concat_1"
+|  |  |  |  |  |  Tensor(Const):0,	shape=[0]	"Normal_4_1/sample/sample_shape:0"
+|  |  |  |  |  |  Tensor(StridedSlice):0,	shape=[0]	"Normal_4_1/sample/strided_slice:0"
+|  |  |  |  |  |  |  Op(StridedSlice)	"Normal_4_1/sample/strided_slice"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_4_1/sample/Shape_2:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_4_1/sample/strided_slice/stack:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_4_1/sample/strided_slice/stack_1:0"
+|  |  |  |  |  |  |  |  Tensor(Const):0,	shape=[1]	"Normal_4_1/sample/strided_slice/stack_2:0"
+|  |  |  |  |  |  Tensor(Const):0,	shape=[]	"Normal_4_1/sample/concat_1/axis:0"
+#+END_src
 
 Theoretically the division of two normal distributions produces a
 Cauchy distribution. Looking at the above graph it's clear that it
@@ -146,9 +133,9 @@ does not consider this reduction. This becomes a perfect situation for
 ~symbolic-pymc~! To do this we need to again construct a template to
 unify against like in the svd example. 
 
-* Converting ~PyMC4~ model to ~symbolic-pymc~
+* Converting PyMC4 model to symbolic-pymc
 As mentioned in my last blog converting ~PyMC4~ objects to
-~symbolic-pymc objects is relatively simple,
+~symbolic-pymc~ objects is relatively simple,
 
  #+BEGIN_SRC python  -n :results value pp :wrap "src python :eval never"
    model_mt = mt(obs_graph)
@@ -156,12 +143,17 @@ As mentioned in my last blog converting ~PyMC4~ objects to
  #+END_SRC
 
  #+RESULTS:
- : TFlowMetaTensor(tf.float32, TFlowMetaOp(TFlowMetaOpDef(obj=name: "RealDiv"
- : i..._8', obj=<tf.Operation 'truediv_8' type=RealDiv>), 0, TFlowMetaTensorShape(1000,),, obj=TensorShape([1000])), 'truediv_8:0', obj=<tf.Tensor 'truediv_8:0' shape=(1000,) dtype=float32>)
+ #+BEGIN_src python :eval never
+ TFlowMetaTensor(tf.float32, TFlowMetaOp(TFlowMetaOpDef(obj=name: "RealDiv"
+ i..._1', obj=<tf.Operation 'RealDiv_1' type=RealDiv>), 0, TFlowMetaTensorShape(,, obj=TensorShape([])), 'RealDiv_1:0', obj=<tf.Tensor 'RealDiv_1:0' shape=() dtype=float32>)
+ #+END_src
 
-* COMMENT manipulating the ~symbolic-pymc~ graph
-This is where things become difficult and encapsulates my work moving
-forward. To manipulate the graph we would do the following.
+* manipulating the symbolic-pymc graph
+To manipulate the graph we need to create a goal (~cauchy_reduceo~) That
+first takes a term we want to manipulate and creates a template to
+unify against (~Q_mt~). With this template we need to then unify it
+against a template representing what we want to substitute in the
+output graph (~cauchy_mt~).
 
 #+BEGIN_SRC python -n :exports both :results output :wrap "src python :eval never"
   from kanren import lall, eq, run
@@ -171,65 +163,74 @@ forward. To manipulate the graph we would do the following.
   from tensorflow_probability.python.internal import tensor_util
 
   def cauchy_reduceo(expanded_term, reduced_term):
-      X_mt = tfp_normal(0, 1)
-      Y_mt = tfp_normal(0, 1)
-      cauchy_mt = tfp_cauchy(0, 1)
-      Q_mt = mt.realdiv(X_mt, Y_mt, name=var())
-      return lall(eq(expanded_term, Q_mt),
-                  eq(reduced_term, cauchy_mt))
+      ''' Goal used for unification
+      '''
+      X_mt = mt.reshape(tfp_normal(0, 1), shape=var(), name=var())
+      Y_mt = mt.reshape(tfp_normal(0, 1), shape=var(), name=var())
+      cauchy_mt = tfp_cauchy(0., 1.)
+      Q_mt = mt.realdiv(X_mt, Y_mt, shape=var(), name=var())
+      return lall(eq( Q_mt, expanded_term),
+          eq(reduced_term, cauchy_mt))
+
 
   def simplify_graph(expanded_term):
+      ''' evaluates goal.
+      '''
       with graph_mode():
           expanded_term = mt(expanded_term)
           reduced_term = var()
           graph_goal = graph_applyo(cauchy_reduceo, expanded_term, reduced_term)
           res = run(1, reduced_term, graph_goal)
-          res_tf = res[0].eval_obj.reify()
+          res_tf = res[0].reify()
           return res_tf
 
 
-  def tfp_normal(loc, scale, n=1000):
-      # might need n (to track)
-
+  def tfp_normal(loc, scale):
+      '''Used to create template for unifying
+      '''
       sampled = var()
       return mt.add(mt.mul(sampled, scale, name=var()), loc, name=var())
 
 
-  def tfp_cauchy(loc, scale, n=1000):
-
-      shape = mt.concat(0, [[n], batch_shape_tensor(loc, scale)])
-      probs = mt.random.uniform(shape=shape.obj, minval=0., maxval=1.)
-      return mt.add(float(loc),
-                    mt.mul(float(scale),
+  def tfp_cauchy(loc, scale):
+      '''Used to create template for unifying
+      '''
+      shape = var()
+      probs = mt.randomuniform(shape=shape, minval=0., maxval=1.)
+      return mt.add(loc,
+                    mt.mul(scale,
                            mt.tan(mt.mul(np.pi, mt.sub(probs, .5, name=var())), 
                                   name=var()), name=var()), name=var())
-
-
-  def batch_shape_tensor(loc, scale):
-    t = mt.broadcast_dynamic_shape(
-        mt.shape(input=tensor_util.convert_immutable_to_tensor(loc)),
-        mt.shape(input=tensor_util.convert_immutable_to_tensor(scale)))
-    return t
+  simplify_graph(obs_graph)
 #+END_SRC
 
 #+RESULTS:
 #+BEGIN_src python :eval never
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/tmp/babel-8QuM0a/python-aq3Ajo", line 3, in <module>
+    from symbolic_pymc.relations.graph import graph_applyo
+ModuleNotFoundError: No module named 'symbolic_pymc.relations.graph'
 #+END_src
 
-In the above code tfp_normal and tfp_cauchy are created to unify
-against tfp.distributions.normal and tfp.distributions.cauchy. Now
-would be a good time to mention that symbolic-pymc no longer disables
-eager mode by default. The way around this is with tensorflow's own
-graph_mode as shown above in simplify_graph.
+In the above code ~tfp_normal~ and ~tfp_cauchy~ are created to unify
+against ~tfp.distributions.normal~ and ~tfp.distributions.cauchy~. To
+create these I looked at ~tfp.distributions.normal._sample_n~ and
+~tfp.distributions.cauchy._sample_n~ respectively.  Now would be a
+good time to mention that ~symbolic-pymc~ no longer disables eager
+mode by default. The way around this is with ~tensorflow's~ own
+~graph_mode~ as shown above in ~simplify_graph~.
 
-Another thing to point out is that symbolic-pymc has access to most of
-tensorflow's api and using it is as simple as calling "mt.API_NAME"
-for example mt.add(1, 2). What this does in the background is searches
-for the operation through op_def_library.OpDefLibrary and returns the
-corresponding meta object. It is important to use the "mt"
-representation because it allows us to use logic variables; var() from
-the unification library.
+Another part of ~symbolic-pymc~ is it's access to most of
+~tensorflow's~ api. Using this api is as simple as calling
+"mt.API_NAME" for example ~mt.add(1, 2)~. What this does in the
+background is searches for the operation through
+~op_def_library.OpDefLibrary~ and returns the corresponding meta
+object. It is important to use the "mt" representation because it
+allows us to use logic variables; ~var()~ from the unification
+library.
 
+* old :noexport:
 #+BEGIN_SRC python -n :exports both :results output :wrap "src python :eval never"
   with graph_mode():
       X_mt = mt.reshape(tfp_normal(0, 1), shape=(1000,), name=var())
@@ -279,6 +280,8 @@ Tensor(RealDiv):0,	shape=Unknown	"~_6368"
 Now that it's possible to create a PyMC4 model, convert it to
 symbolic_pymc, manipulate the graph and then convert back to a usable
 object I'll be focusing adding common algebraic operations.
+
+
 * Next steps :noexport:
 Using the above template we need to match it to our model. Following
 this we can replace it with a Cauchy representation and translate that
@@ -682,3 +685,96 @@ IndexError: tuple index out of range
 #+END_SRC
 
 #+CAPTION:
+* COMMENT new work
+
+#+BEGIN_SRC python -n :exports both :results output :wrap "src python :eval never"
+  from kanren import lall, eq, run
+  from unification import var
+  from symbolic_pymc.relations.graph import graph_applyo
+  from symbolic_pymc.etuple import ExpressionTuple
+  from tensorflow_probability.python.internal import tensor_util
+
+  def cauchy_reduceo(expanded_term, reduced_term):
+      X_mt = mt.reshape(tfp_normal(0, 1), shape=var(), name=var())
+      Y_mt = mt.reshape(tfp_normal(0, 1), shape=var(), name=var())
+      cauchy_mt = tfp_cauchy(0., 1.)
+      Q_mt = mt.realdiv(X_mt, Y_mt, shape=var(), name=var())
+      return lall(eq(Q_mt, expanded_term),
+          eq(reduced_term, cauchy_mt))
+
+
+  def simplify_graph(expanded_term):
+      with graph_mode():
+          expanded_term = mt(expanded_term)
+          reduced_term = var()
+          graph_goal = graph_applyo(cauchy_reduceo, expanded_term, reduced_term)
+          res = run(1, reduced_term, graph_goal)
+          res_tf = res[0].reify()
+          return res_tf
+
+
+  def tfp_normal(loc, scale):
+      # sampled = mt.randomstandardnormal(shape=var(), mean=loc,
+      #                                   stddev=scale, name=var(),
+      #                                   seed=var(), seed2=var(),
+      #                                   dtype=var())
+      sampled = var()
+      return mt.add(mt.mul(sampled, scale, name=var()), loc, name=var())
+
+
+  def tfp_cauchy(loc, scale):
+
+      shape = var()#mt.concat(0, [[n], batch_shape_tensor(loc, scale)])
+      probs = mt.randomuniform(shape=shape, minval=0., maxval=1., name=var())
+      return mt.add(loc,
+                    mt.mul(scale,
+                           mt.tan(mt.mul(np.pi, mt.sub(probs, .5, name=var())), 
+                                  name=var()), name=var()), name=var())
+
+
+  def batch_shape_tensor(loc, scale):
+    t = mt.broadcast_dynamic_shape(
+        mt.shape(input=tensor_util.convert_immutable_to_tensor(loc)),
+        mt.shape(input=tensor_util.convert_immutable_to_tensor(scale)))
+    return t
+
+
+
+
+  def transform_example():
+      x = yield dist.Normal('x', mu=0., sigma=1.)
+      y = yield dist.Normal('y', mu=0., sigma=1.)
+      q = tf.realdiv(x, y)
+      return q
+
+
+  with graph_mode():
+      model = transform_example()
+      obs_graph, state = pm.evaluate_model(model)
+
+
+  def test():
+      with graph_mode():
+          reduced_term = var()
+          X_mt = mt.reshape(tfp_normal(0, 1), shape=var(), name=var())
+          Y_mt = mt.reshape(tfp_normal(0, 1), shape=var(), name=var())
+          cauchy_mt = tfp_cauchy(0., 1.)
+          Q_mt = mt.realdiv(X_mt, Y_mt, shape=var(), name=var())
+      #res = run(1, X_mt, eq(Q_mt, mt(obs_graph)))
+      l = lall(eq(Q_mt, mt(obs_graph)),
+          eq(cauchy_mt, reduced_term))
+      res = run(1, reduced_term, l)
+      return res
+  #simplify_graph(obs_graph)
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_src python :eval never
+#+END_src
+* Todo :noexport:
+** DONE Fix shapes
+Agreed to ignore them for example
+** sample from both
+I believe he means normal ratio and cauchy
+** Talk about why one may do this
+** Add doc strings and remove uneeded packages
