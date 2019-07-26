@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Converting `PyMC4` to `Symbolic-PyMC`Continued</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Joseph Willard">
+
+    <!-- Le styles -->
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+      .tag-1 {
+        font-size: 13pt;
+      }
+      .tag-2 {
+        font-size: 10pt;
+      }
+      .tag-2 {
+        font-size: 8pt;
+      }
+      .tag-4 {
+        font-size: 6pt;
+     }
+    </style>
+    <link href="/theme/css/bootstrap-responsive.min.css" rel="stylesheet">
+        <link href="/theme/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/theme/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/theme/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/theme/images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/theme/images/apple-touch-icon-114x114.png">
+
+    <link href="/" type="application/atom+xml" rel="alternate" title="Joseph Willard's Blog ATOM Feed" />
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="/index.html">Joseph Willard's Blog </a>
+          <div class="nav-collapse">
+            <ul class="nav">
+                <li><a href="/pages/about-me.html">About Me</a></li>
+                          <li class="divider-vertical"></li>
+                  <li class="active">
+                    <a href="/category/gsoc.html">
+						<i class="icon-folder-open icon-large"></i>GSoC
+					</a>
+                  </li>
+                  <li >
+                    <a href="/category/misc.html">
+						<i class="icon-folder-open icon-large"></i>misc
+					</a>
+                  </li>
+
+                          <ul class="nav pull-right">
+                                <li><a href="/archives.html"><i class="icon-th-list"></i>Archives</a></li>
+                          </ul>
+
+            </ul>
+            <!--<p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>-->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="span9" id="content">
+<section id="content">
+        <article>
+                <header>
+                        <h1>
+                                <a href=""
+                                        rel="bookmark"
+                                        title="Permalink to Converting `PyMC4` to `Symbolic-PyMC`Continued">
+                                        Converting `PyMC4` to `Symbolic-PyMC`Continued
+                                </a>
+                        </h1>
+                </header>
+                <div class="entry-content">
+                <div class="well">
+<footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2019-07-23T00:00:00-04:00">
+        <i class="icon-calendar"></i>Tue 23 July 2019
+</abbr>
+<span class="label">By</span>
+<a href="/author/joseph-willard.html"><i class="icon-user"></i>Joseph Willard</a>
+<span class="label">Category</span>
+<a href="/category/gsoc.html"><i class="icon-folder-open"></i>GSoC</a>.
+
+
+</footer><!-- /.post-info -->                </div>
+                <h1>Second evaluation and moving forward</h1>
+<p>During this second stretch I was able to have another PR accepted. This
+also began the phase of looking into how one might convert a <code>PyMC4</code> model to
+<code>symbolic-pymc</code>. This process was the topic of my last blog where I
+not only closed my discussion on my svd problem. I also showed that
+converting <code>PyMC4</code> model to a <code>symbolic-pymc</code> meta object is a pretty
+straight forward operation after the recent changes to <code>PyMC4</code>. </p>
+<div class="highlight"><pre><span></span>What about converting a `PyMC4` model to a `symbolic-pymc` meta
+</pre></div>
+
+
+<p>object making improvements and then converting it back? In the
+following ratio of normals example I am not accounting for shape since
+<code>PyMC4</code> does not directly account for it without using <code>sample</code> from
+the underlying <code>tensorflowprobability</code> object.</p>
+<div class="highlight"><pre><span></span> <span class="mi">1</span>  <span class="kn">from</span> <span class="nn">pymc4</span> <span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">dist</span>
+ <span class="mi">2</span>  
+ <span class="mi">3</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.tensorflow.meta</span> <span class="kn">import</span> <span class="n">mt</span>
+ <span class="mi">4</span>  
+ <span class="mi">5</span>  <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="kn">as</span> <span class="nn">tf</span>
+ <span class="mi">6</span>  
+ <span class="mi">7</span>  <span class="kn">import</span> <span class="nn">tensorflow_probability</span> <span class="kn">as</span> <span class="nn">tfp</span>
+ <span class="mi">8</span>  
+ <span class="mi">9</span>  <span class="kn">from</span> <span class="nn">tensorflow.python.eager.context</span> <span class="kn">import</span> <span class="n">graph_mode</span>  
+<span class="mi">10</span>  
+<span class="mi">11</span>  <span class="nd">@pm.model</span>
+<span class="mi">12</span>  <span class="k">def</span> <span class="nf">transform_example</span><span class="p">():</span>
+<span class="mi">13</span>      <span class="n">x</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="mi">14</span>      <span class="n">y</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="mi">15</span>      <span class="n">q</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">realdiv</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="mi">16</span>      <span class="k">return</span> <span class="n">q</span>
+<span class="mi">17</span>  
+<span class="mi">18</span>  
+<span class="mi">19</span>  <span class="k">with</span> <span class="n">graph_mode</span><span class="p">():</span>
+<span class="mi">20</span>      <span class="n">model</span> <span class="o">=</span> <span class="n">transform_example</span><span class="p">()</span>
+<span class="mi">21</span>      <span class="n">obs_graph</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">evaluate_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="mi">22</span>  
+<span class="mi">23</span>  <span class="n">_</span> <span class="o">=</span> <span class="n">tf_dprint</span><span class="p">(</span><span class="n">obs_graph</span><span class="p">)</span>
+<span class="mi">24</span>
+
+<span class="n">Tensor</span><span class="p">(</span><span class="n">RealDiv</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;RealDiv_1:0&quot;</span>
+<span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">RealDiv</span><span class="p">)</span>  <span class="s2">&quot;RealDiv_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Reshape</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_3_1/sample/Reshape:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Reshape</span><span class="p">)</span>    <span class="s2">&quot;Normal_3_1/sample/Reshape&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">AddV2</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/add:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">AddV2</span><span class="p">)</span>    <span class="s2">&quot;Normal_3_1/sample/add&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Mul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/mul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Mul</span><span class="p">)</span>    <span class="s2">&quot;Normal_3_1/sample/mul&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Add</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/random_normal:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Add</span><span class="p">)</span>  <span class="s2">&quot;Normal_3_1/sample/random_normal&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Mul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/random_normal/mul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Mul</span><span class="p">)</span>    <span class="s2">&quot;Normal_3_1/sample/random_normal/mul&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">RandomStandardNormal</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/random_normal/RandomStandardNormal:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">RandomStandardNormal</span><span class="p">)</span> <span class="s2">&quot;Normal_3_1/sample/random_normal/RandomStandardNormal&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">ConcatV2</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>   <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/concat:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">ConcatV2</span><span class="p">)</span>   <span class="s2">&quot;Normal_3_1/sample/concat&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/concat/values_0:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">BroadcastArgs</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/BroadcastArgs:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">BroadcastArgs</span><span class="p">)</span>    <span class="s2">&quot;Normal_3_1/sample/BroadcastArgs&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/Shape:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/Shape_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_3_1/sample/concat/axis:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_3_1/sample/random_normal/stddev:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_3_1/sample/random_normal/mean:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_3/scale:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_3/loc:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">ConcatV2</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/concat_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">ConcatV2</span><span class="p">)</span> <span class="s2">&quot;Normal_3_1/sample/concat_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/sample_shape:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">StridedSlice</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>   <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/strided_slice:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">StridedSlice</span><span class="p">)</span>   <span class="s2">&quot;Normal_3_1/sample/strided_slice&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/Shape_2:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/strided_slice/stack:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/strided_slice/stack_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_3_1/sample/strided_slice/stack_2:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_3_1/sample/concat_1/axis:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Reshape</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_4_1/sample/Reshape:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Reshape</span><span class="p">)</span>    <span class="s2">&quot;Normal_4_1/sample/Reshape&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">AddV2</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/add:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">AddV2</span><span class="p">)</span>    <span class="s2">&quot;Normal_4_1/sample/add&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Mul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/mul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Mul</span><span class="p">)</span>    <span class="s2">&quot;Normal_4_1/sample/mul&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Add</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/random_normal:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Add</span><span class="p">)</span>  <span class="s2">&quot;Normal_4_1/sample/random_normal&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Mul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/random_normal/mul:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Mul</span><span class="p">)</span>    <span class="s2">&quot;Normal_4_1/sample/random_normal/mul&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">RandomStandardNormal</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/random_normal/RandomStandardNormal:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">RandomStandardNormal</span><span class="p">)</span> <span class="s2">&quot;Normal_4_1/sample/random_normal/RandomStandardNormal&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">ConcatV2</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>   <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/concat:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">ConcatV2</span><span class="p">)</span>   <span class="s2">&quot;Normal_4_1/sample/concat&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/concat/values_0:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">BroadcastArgs</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/BroadcastArgs:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">BroadcastArgs</span><span class="p">)</span>    <span class="s2">&quot;Normal_4_1/sample/BroadcastArgs&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/Shape:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/Shape_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_4_1/sample/concat/axis:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_4_1/sample/random_normal/stddev:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_4_1/sample/random_normal/mean:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_4/scale:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_4/loc:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">ConcatV2</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/concat_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">ConcatV2</span><span class="p">)</span> <span class="s2">&quot;Normal_4_1/sample/concat_1&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/sample_shape:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">StridedSlice</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>   <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/strided_slice:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">StridedSlice</span><span class="p">)</span>   <span class="s2">&quot;Normal_4_1/sample/strided_slice&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/Shape_2:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/strided_slice/stack:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/strided_slice/stack_1:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;Normal_4_1/sample/strided_slice/stack_2:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Normal_4_1/sample/concat_1/axis:0&quot;</span>
+</pre></div>
+
+
+<p>Theoretically the division of two normal distributions produces a
+Cauchy distribution. Looking at the above graph it's clear that it
+does not consider this reduction. This becomes a perfect situation for
+<code>symbolic-pymc</code>! To do this we need to again construct a template to
+unify against like in the svd example. </p>
+<h1>Converting PyMC4 model to symbolic-pymc</h1>
+<p>As mentioned in my last blog converting <code>PyMC4</code> objects to
+<code>symbolic-pymc</code> objects is relatively simple,</p>
+<div class="highlight"><pre><span></span>1  model_mt = mt(obs_graph)
+2  _ = mt(obs_graph)
+
+TFlowMetaTensor(tf.float32, TFlowMetaOp(TFlowMetaOpDef(obj=name: &quot;RealDiv&quot;
+i..._1&#39;, obj=&lt;tf.Operation &#39;RealDiv_1&#39; type=RealDiv&gt;), 0, TFlowMetaTensorShape(,, obj=TensorShape([])), &#39;RealDiv_1:0&#39;, obj=&lt;tf.Tensor &#39;RealDiv_1:0&#39; shape=() dtype=float32&gt;)
+</pre></div>
+
+
+<h1>manipulating the symbolic-pymc graph</h1>
+<p>To manipulate the graph we need to create a goal (<code>cauchy_reduceo</code>) That
+first takes a term we want to manipulate and creates a template to
+unify against (<code>Q_mt</code>). With this template we need to then unify it
+against a template representing what we want to substitute in the
+output graph (<code>cauchy_mt</code>).</p>
+<div class="highlight"><pre><span></span> <span class="mi">1</span>  <span class="kn">from</span> <span class="nn">kanren</span> <span class="kn">import</span> <span class="n">lall</span><span class="p">,</span> <span class="n">eq</span><span class="p">,</span> <span class="n">run</span>
+ <span class="mi">2</span>  <span class="kn">from</span> <span class="nn">unification</span> <span class="kn">import</span> <span class="n">var</span>
+ <span class="mi">3</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.relations.graph</span> <span class="kn">import</span> <span class="n">graph_applyo</span>
+ <span class="mi">4</span>  <span class="kn">from</span> <span class="nn">symbolic_pymc.etuple</span> <span class="kn">import</span> <span class="n">ExpressionTuple</span>
+ <span class="mi">5</span>  <span class="kn">from</span> <span class="nn">tensorflow_probability.python.internal</span> <span class="kn">import</span> <span class="n">tensor_util</span>
+ <span class="mi">6</span>  
+ <span class="mi">7</span>  <span class="k">def</span> <span class="nf">cauchy_reduceo</span><span class="p">(</span><span class="n">expanded_term</span><span class="p">,</span> <span class="n">reduced_term</span><span class="p">):</span>
+ <span class="mi">8</span>      <span class="s1">&#39;&#39;&#39; Goal used for unification.</span>
+<span class="s1"> 9      &#39;&#39;&#39;</span>
+<span class="mi">10</span>      <span class="n">X_mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tfp_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="n">var</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">())</span>
+<span class="mi">11</span>      <span class="n">Y_mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tfp_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="n">var</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">())</span>
+<span class="mi">12</span>      <span class="n">cauchy_mt</span> <span class="o">=</span> <span class="n">tfp_cauchy</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+<span class="mi">13</span>      <span class="n">Q_mt</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">realdiv</span><span class="p">(</span><span class="n">X_mt</span><span class="p">,</span> <span class="n">Y_mt</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">var</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">())</span>
+<span class="mi">14</span>      <span class="k">return</span> <span class="n">lall</span><span class="p">(</span><span class="n">eq</span><span class="p">(</span> <span class="n">Q_mt</span><span class="p">,</span> <span class="n">expanded_term</span><span class="p">),</span>
+<span class="mi">15</span>      <span class="n">eq</span><span class="p">(</span><span class="n">reduced_term</span><span class="p">,</span> <span class="n">cauchy_mt</span><span class="p">))</span>
+<span class="mi">16</span>  
+<span class="mi">17</span>  
+<span class="mi">18</span>  <span class="k">def</span> <span class="nf">simplify_graph</span><span class="p">(</span><span class="n">expanded_term</span><span class="p">):</span>
+<span class="mi">19</span>      <span class="s1">&#39;&#39;&#39; evaluates goal.</span>
+<span class="s1">20      &#39;&#39;&#39;</span>
+<span class="mi">21</span>      <span class="k">with</span> <span class="n">graph_mode</span><span class="p">():</span>
+<span class="mi">22</span>      <span class="n">expanded_term</span> <span class="o">=</span> <span class="n">mt</span><span class="p">(</span><span class="n">expanded_term</span><span class="p">)</span>
+<span class="mi">23</span>      <span class="n">reduced_term</span> <span class="o">=</span> <span class="n">var</span><span class="p">()</span>
+<span class="mi">24</span>      <span class="n">graph_goal</span> <span class="o">=</span> <span class="n">graph_applyo</span><span class="p">(</span><span class="n">cauchy_reduceo</span><span class="p">,</span> <span class="n">expanded_term</span><span class="p">,</span> <span class="n">reduced_term</span><span class="p">)</span>
+<span class="mi">25</span>      <span class="n">res</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">reduced_term</span><span class="p">,</span> <span class="n">graph_goal</span><span class="p">)</span>
+<span class="mi">26</span>      <span class="n">res_tf</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reify</span><span class="p">()</span>
+<span class="mi">27</span>      <span class="k">return</span> <span class="n">res_tf</span>
+<span class="mi">28</span>  
+<span class="mi">29</span>  
+<span class="mi">30</span>  <span class="k">def</span> <span class="nf">tfp_normal</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+<span class="mi">31</span>      <span class="s1">&#39;&#39;&#39;Used to create template for unifying.</span>
+<span class="s1">32      &#39;&#39;&#39;</span>
+<span class="mi">33</span>      <span class="n">sampled</span> <span class="o">=</span> <span class="n">var</span><span class="p">()</span>
+<span class="mi">34</span>      <span class="k">return</span> <span class="n">mt</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">()),</span> <span class="n">loc</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">())</span>
+<span class="mi">35</span>  
+<span class="mi">36</span>  
+<span class="mi">37</span>  <span class="k">def</span> <span class="nf">tfp_cauchy</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+<span class="mi">38</span>      <span class="s1">&#39;&#39;&#39;Used to create template for unifying.</span>
+<span class="s1">39      &#39;&#39;&#39;</span>
+<span class="mi">40</span>      <span class="n">shape</span> <span class="o">=</span> <span class="n">var</span><span class="p">()</span>
+<span class="mi">41</span>      <span class="n">probs</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">randomuniform</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">minval</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">maxval</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+<span class="mi">42</span>      <span class="k">return</span> <span class="n">mt</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span>
+<span class="mi">43</span>            <span class="n">mt</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span>
+<span class="mi">44</span>               <span class="n">mt</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">mt</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">())),</span> 
+<span class="mi">45</span>                  <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">()),</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">()),</span> <span class="n">name</span><span class="o">=</span><span class="n">var</span><span class="p">())</span>
+<span class="mi">46</span>  <span class="n">simplify_graph</span><span class="p">(</span><span class="n">obs_graph</span><span class="p">)</span>
+
+
+<span class="n">Tensor</span><span class="p">(</span><span class="n">Add</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">]</span>    <span class="s2">&quot;Add_169:0&quot;</span>
+<span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Add</span><span class="p">)</span>  <span class="s2">&quot;Add_169&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Add_169/x:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Mul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">]</span>    <span class="s2">&quot;Mul_339:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Mul</span><span class="p">)</span>    <span class="s2">&quot;Mul_339&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Mul_339/x:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Tan</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">]</span>    <span class="s2">&quot;Tan_169:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Tan</span><span class="p">)</span>  <span class="s2">&quot;Tan_169&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Mul</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">]</span>    <span class="s2">&quot;Mul_338:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Mul</span><span class="p">)</span>    <span class="s2">&quot;Mul_338&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Mul_338/x:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Sub</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">]</span>    <span class="s2">&quot;Sub_169:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">Sub</span><span class="p">)</span>  <span class="s2">&quot;Sub_169&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">RandomUniform</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">]</span>    <span class="s2">&quot;cauchy_169:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Op</span><span class="p">(</span><span class="n">RandomUniform</span><span class="p">)</span>  <span class="s2">&quot;cauchy_169&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="s2">&quot;cauchy_169/shape:0&quot;</span>
+<span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>  <span class="n">Tensor</span><span class="p">(</span><span class="n">Const</span><span class="p">):</span><span class="mi">0</span><span class="p">,</span>  <span class="n">shape</span><span class="o">=</span><span class="p">[]</span>    <span class="s2">&quot;Sub_169/y:0&quot;</span>
+</pre></div>
+
+
+<p>In the above code <code>tfp_normal</code> and <code>tfp_cauchy</code> are created to unify
+against <code>tfp.distributions.normal</code> and <code>tfp.distributions.cauchy</code>. To
+create these I looked at <code>tfp.distributions.normal._sample_n</code> and
+<code>tfp.distributions.cauchy._sample_n</code> respectively.  Now would be a
+good time to mention that <code>symbolic-pymc</code> no longer disables eager
+mode by default. The way around this is with <code>tensorflow's</code> own
+<code>graph_mode</code> as shown above in <code>simplify_graph</code>.</p>
+<p>Another part of <code>symbolic-pymc</code> is it's access to most of
+<code>tensorflow's</code> api. Using this api is as simple as calling
+"mt.API_NAME" for example <code>mt.add(1, 2)</code>. What this does in the
+background is searches for the operation through
+<code>op_def_library.OpDefLibrary</code> and returns the corresponding meta
+object. It is important to use the "mt" representation because it
+allows us to use logic variables; <code>var()</code> from the unification
+library.</p>
+<h1>Moving Forward</h1>
+<p>Now that it's possible to create a PyMC4 model, convert it to
+symbolic_pymc, manipulate the graph and then convert back to a usable
+object I'll be focusing adding common algebraic operations.</p>
+                </div><!-- /.entry-content -->
+        </article>
+</section>
+        </div><!--/span-->
+
+                <div class="span3 well sidebar-nav" id="sidebar">
+<ul class="nav nav-list">
+<li class="nav-header"><h4><i class="icon-external-link"></i>blogroll</h4></li>
+    <li><a href="https://twiecki.io/"><i class="icon-external-link"></i>Twiecki's</a></li>
+    <li><a href="https://docs.pymc.io/"><i class="icon-external-link"></i>PyMC3</a></li>
+<li class="nav-header"><h4><i class="icon-home icon-large"></i> social</h4></li>
+    <li><a href="https://github.com/josephwillard"><i class="icon-github-sign icon-large"></i>github</a></li>
+    <li><a href="https://www.linkedin.com/in/joseph-willard-5040a4117/"><i class="icon-linkedin-sign icon-large"></i>linkedin</a></li>
+
+<li class="nav-header"><h4><i class="icon-folder-close icon-large"></i>Categories</h4></li>
+<li>
+<a href="/category/gsoc.html">
+    <i class="icon-folder-open icon-large"></i>GSoC
+</a>
+</li>
+<li>
+<a href="/category/misc.html">
+    <i class="icon-folder-open icon-large"></i>misc
+</a>
+</li>
+
+<li class="nav-header"><h4><i class="icon-tags icon-large"></i>Tags</h4></li>
+
+
+</ul>        </div><!--/.well -->
+
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <address id="about">
+                Proudly powered by <a href="http://pelican.notmyidea.org/">Pelican <i class="icon-external-link"></i></a>,
+                                which takes great advantage of <a href="http://python.org">Python <i class="icon-external-link"></i></a>.
+        </address><!-- /#about -->
+
+        <p>The theme is from <a href="http://twitter.github.com/bootstrap/">Bootstrap from Twitter <i class="icon-external-link"></i></a>,
+                   and <a href="http://fortawesome.github.com/Font-Awesome/">Font-Awesome <i class="icon-external-link"></i></a>, thanks!</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+
+
+    <!-- Le javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/theme/js/jquery-1.7.2.min.js"></script>
+    <script src="/theme/js/bootstrap.min.js"></script>
+  </body>
+</html>
