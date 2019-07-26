@@ -20,7 +20,7 @@ not only closed my discussion on my svd problem. I also showed that
 converting ~PyMC4~ model to a ~symbolic-pymc~ meta object is a pretty
 straight forward operation after the recent changes to ~PyMC4~. 
 
-    What about converting a ~PyMC4~ model to a ~symbolic-pymc~ meta
+What about converting a ~PyMC4~ model to a ~symbolic-pymc~ meta
 object making improvements and then converting it back? In the
 following ratio of normals example I am not accounting for shape since
 ~PyMC4~ does not directly account for it without using ~sample~ from

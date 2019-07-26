@@ -1,4 +1,4 @@
-Title: Converting `PyMC4` to `Symbolic-PyMC`Continued
+Title: Converting `PyMC4` to `Symbolic-PyMC` Continued
 Author: Joseph Willard
 Date: 2019-7-23
 
@@ -12,11 +12,11 @@ not only closed my discussion on my svd problem. I also showed that
 converting `PyMC4` model to a `symbolic-pymc` meta object is a pretty
 straight forward operation after the recent changes to `PyMC4`. 
 
-    What about converting a `PyMC4` model to a `symbolic-pymc` meta
+What about converting a `PyMC4` model to a `symbolic-pymc` meta
 object making improvements and then converting it back? In the
 following ratio of normals example I am not accounting for shape since
 `PyMC4` does not directly account for it without using `sample` from
-the underlying `tensorflowprobability` object.
+the underlying `tensorflow_probability` object.
 
      1  from pymc4 import distributions as dist
      2  
