@@ -56,7 +56,7 @@ making improvements and then converting it back? Consider the following,
   def transform_example():
       x = dist.Normal('x', mu=0, sigma=1).sample(shape=(1000, ))
       y = dist.Normal('y', mu=0, sigma=1e-20).sample(shape=(1000, ))
-      q = x/y
+      q = tf.realdiv(x, y)
       yield None
       return q
 
@@ -144,10 +144,7 @@ Theoretically the division of two normal distributions produces a
 Cauchy distribution. Looking at the above graph it's clear that it
 does not consider this reduction. This becomes a perfect situation for
 ~symbolic-pymc~! To do this we need to again construct a template to
-unify against like in the svd example. Now would be a good time to
-mention that ~symbolic-pymc~ no longer disables eager mode by
-default. The way around this is with ~tensorflow's~ own ~graph_mode~
-as shown above.
+unify against like in the svd example. 
 
 * Converting ~PyMC4~ model to ~symbolic-pymc~
 As mentioned in my last blog converting ~PyMC4~ objects to
@@ -162,7 +159,7 @@ As mentioned in my last blog converting ~PyMC4~ objects to
  : TFlowMetaTensor(tf.float32, TFlowMetaOp(TFlowMetaOpDef(obj=name: "RealDiv"
  : i..._8', obj=<tf.Operation 'truediv_8' type=RealDiv>), 0, TFlowMetaTensorShape(1000,),, obj=TensorShape([1000])), 'truediv_8:0', obj=<tf.Tensor 'truediv_8:0' shape=(1000,) dtype=float32>)
 
-* manipulating the ~symbolic-pymc~ graph
+* COMMENT manipulating the ~symbolic-pymc~ graph
 This is where things become difficult and encapsulates my work moving
 forward. To manipulate the graph we would do the following.
 
@@ -194,8 +191,7 @@ forward. To manipulate the graph we would do the following.
   def tfp_normal(loc, scale, n=1000):
       # might need n (to track)
 
-      sampled = mt.random.normal(
-      shape=(1000, ), mean=0., stddev=1.)
+      sampled = var()
       return mt.add(mt.mul(sampled, scale, name=var()), loc, name=var())
 
 
@@ -220,15 +216,19 @@ forward. To manipulate the graph we would do the following.
 #+BEGIN_src python :eval never
 #+END_src
 
-One thing to point out is that ~symbolic-pymc~ has access to most of
-~tensorflow's~ api and using it is as simple as calling "mt.API_NAME"
-for example "mt.add(1, 2)". What this does in the background is
-searches for the operation through ~op_def_library.OpDefLibrary~ and
-returns to the user the corresponding meta object. 
+In the above code tfp_normal and tfp_cauchy are created to unify
+against tfp.distributions.normal and tfp.distributions.cauchy. Now
+would be a good time to mention that symbolic-pymc no longer disables
+eager mode by default. The way around this is with tensorflow's own
+graph_mode as shown above in simplify_graph.
 
-We also need the "mt" representation because it allows us to use logic
-variables; var() from the ~unification~ library; for example let's
-look at the template that will be used for unification.
+Another thing to point out is that symbolic-pymc has access to most of
+tensorflow's api and using it is as simple as calling "mt.API_NAME"
+for example mt.add(1, 2). What this does in the background is searches
+for the operation through op_def_library.OpDefLibrary and returns the
+corresponding meta object. It is important to use the "mt"
+representation because it allows us to use logic variables; var() from
+the unification library.
 
 #+BEGIN_SRC python -n :exports both :results output :wrap "src python :eval never"
   with graph_mode():
@@ -274,7 +274,12 @@ Tensor(RealDiv):0,	shape=Unknown	"~_6368"
 |  |  |  |  (TFlowMetaConstant(obj=<tf.Tensor 'Const_17698:0' shape=() dtype=int32>),)
 #+END_src
 
-* Next steps
+
+* Moving Forward
+Now that it's possible to create a PyMC4 model, convert it to
+symbolic_pymc, manipulate the graph and then convert back to a usable
+object I'll be focusing adding common algebraic operations.
+* Next steps :noexport:
 Using the above template we need to match it to our model. Following
 this we can replace it with a Cauchy representation and translate that
 back for use. To properly unify it though we need to make certain
