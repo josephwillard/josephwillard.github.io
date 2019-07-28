@@ -1,8 +1,0 @@
-#+OPTIONS: toc:nil
-Title: Graph Objects, python interfacing functions and TensorFlow 
-Author: Joseph Willard
-Date: 
-
-* Introduction
-One of the big efforts on the part of the `symbolic-pymc is to take objects from `pymc4 and `tensorflow and convert them to `symbolic-pymc's own meta objects. Currently there has been a significant amount of work done for this conversion but in respects to `theano objects. In this post I will talk about 
- 
