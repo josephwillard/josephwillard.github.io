@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Joseph Willard's Blog</title>
+    <title>Updates and the end of GSoC</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="Joseph Willard">
@@ -65,7 +65,7 @@
             <ul class="nav">
                 <li><a href="/pages/about-me.html">About Me</a></li>
                           <li class="divider-vertical"></li>
-                  <li >
+                  <li class="active">
                     <a href="/category/gsoc.html">
 						<i class="icon-folder-open icon-large"></i>GSoC
 					</a>
@@ -91,26 +91,86 @@
       <div class="row">
         <div class="span9" id="content">
 <section id="content">
-<h1>Archives for Joseph Willard's Blog</h1>
+        <article>
+                <header>
+                        <h1>
+                                <a href=""
+                                        rel="bookmark"
+                                        title="Permalink to Updates and the end of GSoC">
+                                        Updates and the end of GSoC
+                                </a>
+                        </h1>
+                </header>
+                <div class="entry-content">
+                <div class="well">
+<footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2019-08-25T00:00:00-04:00">
+        <i class="icon-calendar"></i>Sun 25 August 2019
+</abbr>
+<span class="label">By</span>
+<a href="/author/joseph-willard.html"><i class="icon-user"></i>Joseph Willard</a>
+<span class="label">Category</span>
+<a href="/category/gsoc.html"><i class="icon-folder-open"></i>GSoC</a>.
 
-<dl>
-	<dt>Sun 25 August 2019</dt>
-	<dd><a href='updates-and-the-end-of-gsoc.html'>Updates and the end of GSoC</a></dd>
-	<dt>Mon 05 August 2019</dt>
-	<dd><a href='general-updates.html'>General Updates</a></dd>
-	<dt>Tue 23 July 2019</dt>
-	<dd><a href='converting-pymc4-to-symbolic-pymc-continued.html'>Converting `PyMC4` to `Symbolic-PyMC` Continued</a></dd>
-	<dt>Mon 08 July 2019</dt>
-	<dd><a href='converting-pymc4-to-symbolic-pymc.html'>Converting `PyMC4` to `Symbolic-PyMC`</a></dd>
-	<dt>Mon 24 June 2019</dt>
-	<dd><a href='unifying-reifying-and-symbolic-pymc-continued.html'>Unifying, Reifying and Symbolic-PyMC Continued</a></dd>
-	<dt>Mon 10 June 2019</dt>
-	<dd><a href='unifying-reifying-and-symbolic-pymc.html'>Unifying, Reifying and Symbolic-PyMC</a></dd>
-	<dt>Wed 29 May 2019</dt>
-	<dd><a href='gsoc-2019-introduction.html'>GSoC 2019 Introduction</a></dd>
-	<dt>Tue 28 May 2019</dt>
-	<dd><a href='first-post.html'>First Post</a></dd>
-</dl>
+
+</footer><!-- /.post-info -->                </div>
+                <h1>Quick update</h1>
+<p>In the final week I continued to work on issue #50 regarding
+updates to `tf_dprint`. There have been a number of updates since I
+first began, a notable one has been the change in user input. In my
+last post `depth_index` was specified as a range, but in the latest
+iteration the user must assign a `depth_lower` and a
+`depth_upper`. This change in notation will hopefully make it more
+understandable. Another change is how a truncated graph looks when
+printed.</p>
+<h1>My Time with GSoC</h1>
+<p>During my time working through GSoC I had roughly 1 contribution
+between each graded section. During this time I also made sure to
+attend project meetings and even hosted one journal talk. In the
+following few sections I'll discuss each contribution I made, what I
+am currently working on as well as how I did against my original
+proposal and what my next steps will be.</p>
+<h2>First period 5/27-6/28</h2>
+<p>During this period I started by getting familiar with the code base
+for PyMC4 and symbolic-pymc by going through open issues and following
+discussions in group meetings and on slack. Since my work for this
+project started slightly before the beginning portion of GSoC I was
+able to make my first contribution early on. My first contribution
+involved removing the `from_obj` method from `MetaSymbol`. `from_obj`
+was responsible for converting TensorFlow/Theano objects to related
+meta objects. After removing I implemented a dispatcher that provided
+the same conversion but made it easier to add new cases as they show up.</p>
+<h2>Second period 6/28-7/22</h2>
+<p>In the second period I spent more time studying symbolic-pymc as well
+as minikanren. I was able to close issue `#28` which involved
+remapping `tensorflow.Operations.inputs` so that they matched
+`OpDef`'s signature. To accomplish this I had to dig deeper into
+`TensorFlow`'s API to determine why the list of inputs were being
+flattened. I also hosted a journal club talk focusing on the
+minimalist version of minikanren, "mukanren". I also published a blog
+post showing after recent updates how to convert `PyMc4` objects to
+`symbolic-pymc`.</p>
+<h2>Third period 7/22-8/26</h2>
+<p>This period I focused more on enhancing tools. In doing so I began to
+draft pull requests that will add basic graph normalization and
+another that will add the ability to index graph printing making it
+easier to read and interpret. Moving forward I am in the process of
+closing the pull request related to graph indexing and will move on to
+create the pull request for graph normalization. In regards to my
+original proposal after completing both the mentioned PRs all that
+would be left would be to implement Gibbs sampling.</p>
+<h1>Final Remarks</h1>
+<p>This marks the last blog post under the umbrella of GSoC. For those
+who have been following my blog I would like to thank you and as I
+move forward I hope to make blog posts a regular thing! In regards to
+GSoC and PyMC it's hard to describe how thankful I am for the
+experience to be able to contribute to an open source project. I know
+as I progress in my career what I learned during my time will become
+an asset and a starting point for what I can hope will be a bright
+future.</p>
+                </div><!-- /.entry-content -->
+        </article>
 </section>
         </div><!--/span-->
 
